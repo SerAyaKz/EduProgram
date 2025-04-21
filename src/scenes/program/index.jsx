@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, useTheme, List, ListItem, ListItemText, Divider, Typography } from '@mui/material';
 import { tokens } from '../../theme';
 import { useParams } from 'react-router-dom';
-import StandardsTable from '../../components/StandardsTable';
+import StandardDetails from '../../components/StandardDetails';
 import SectionDetails from '../../components/SectionDetails';
 import JobDetails from '../../components/JobDetails';
 
@@ -49,7 +49,7 @@ const sectionComponents = {
   [standard.id]: (
     <>
       <Typography variant="h5">{standard.name}</Typography>
-      <StandardsTable programId={program_id} />
+      <StandardDetails programId={program_id} />
     </>
   ),
   [job.id]: (

@@ -3,22 +3,59 @@ import { Formik } from "formik";
 import * as yup from "yup";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Header from "../../components/Header";
+import { useEffect, useState } from "react";
 
 const Form = () => {
   const isNonMobile = useMediaQuery("(min-width:600px)");
+  const [initialValues, setInitialValues] = useState(null);
+  const dbUser = JSON.parse(localStorage.getItem("dbUser"));
 
-  const handleFormSubmit = (values) => {
-    console.log(values);
+  useEffect(() => {
+    setInitialValues({
+      displayName: dbUser.displayName || "",
+      email: dbUser.email || "",
+      photoUrl: dbUser.photoUrl || "",
+      title: dbUser.title || "",
+    });
+  }, []);
+
+  const handleFormSubmit = async (values) => {
+    const response = await fetch('http://localhost:8081/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: dbUser.id,
+        uid: dbUser.uid,
+        displayName: values.displayName,
+        email: values.email,
+        photoUrl: values.photoURL,
+        title: values.title,
+        roleId: dbUser.roleId
+
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to register user in the backend');
+    }
+    const userData = await response.json();
+    localStorage.setItem('dbUser', JSON.stringify(userData));
   };
+
+  if (!initialValues) return null; // You can also show a spinner/loading here
 
   return (
     <Box m="20px">
-      <Header title="CREATE USER" subtitle="Create a New User Profile" />
+      <Header title="UPDATE USER" subtitle="Update Existing User Profile" />
 
       <Formik
         onSubmit={handleFormSubmit}
         initialValues={initialValues}
-        validationSchema={checkoutSchema}
+        validationSchema={userSchema}
+        enableReinitialize
       >
         {({
           values,
@@ -41,32 +78,19 @@ const Form = () => {
                 fullWidth
                 variant="filled"
                 type="text"
-                label="First Name"
+                label="Display Name"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                value={values.firstName}
-                name="firstName"
-                error={!!touched.firstName && !!errors.firstName}
-                helperText={touched.firstName && errors.firstName}
-                sx={{ gridColumn: "span 2" }}
+                value={values.displayName}
+                name="displayName"
+                error={!!touched.displayName && !!errors.displayName}
+                helperText={touched.displayName && errors.displayName}
+                sx={{ gridColumn: "span 4" }}
               />
               <TextField
                 fullWidth
                 variant="filled"
-                type="text"
-                label="Last Name"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.lastName}
-                name="lastName"
-                error={!!touched.lastName && !!errors.lastName}
-                helperText={touched.lastName && errors.lastName}
-                sx={{ gridColumn: "span 2" }}
-              />
-              <TextField
-                fullWidth
-                variant="filled"
-                type="text"
+                type="email"
                 label="Email"
                 onBlur={handleBlur}
                 onChange={handleChange}
@@ -79,46 +103,33 @@ const Form = () => {
               <TextField
                 fullWidth
                 variant="filled"
-                type="text"
-                label="Contact Number"
+                type="url"
+                label="Photo URL"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                value={values.contact}
-                name="contact"
-                error={!!touched.contact && !!errors.contact}
-                helperText={touched.contact && errors.contact}
+                value={values.photoUrl}
+                name="photoUrl"
+                error={!!touched.photoUrl && !!errors.photoUrl}
+                helperText={touched.photoUrl && errors.photoUrl}
                 sx={{ gridColumn: "span 4" }}
               />
               <TextField
                 fullWidth
                 variant="filled"
                 type="text"
-                label="Address 1"
+                label="Title"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                value={values.address1}
-                name="address1"
-                error={!!touched.address1 && !!errors.address1}
-                helperText={touched.address1 && errors.address1}
+                value={values.title}
+                name="title"
+                error={!!touched.title && !!errors.title}
+                helperText={touched.title && errors.title}
                 sx={{ gridColumn: "span 4" }}
-              />
-              <TextField
-                fullWidth
-                variant="filled"
-                type="text"
-                label="Address 2"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.address2}
-                name="address2"
-                error={!!touched.address2 && !!errors.address2}
-                helperText={touched.address2 && errors.address2}
-                sx={{ gridColumn: "span 4" }}
-              />
+                />
             </Box>
             <Box display="flex" justifyContent="end" mt="20px">
               <Button type="submit" color="secondary" variant="contained">
-                Create New User
+                Update User
               </Button>
             </Box>
           </form>
@@ -128,27 +139,12 @@ const Form = () => {
   );
 };
 
-const phoneRegExp =
-  /^((\+[1-9]{1,4}[ -]?)|(\([0-9]{2,3}\)[ -]?)|([0-9]{2,4})[ -]?)*?[0-9]{3,4}[ -]?[0-9]{3,4}$/;
+const userSchema = yup.object().shape({
+  displayName: yup.string().required("Display Name is required"),
+  email: yup.string().email("Invalid email").required("Email is required"),
+  photoUrl: yup.string().url("Invalid URL"),
+  title: yup.string().required("Title is required"),
 
-const checkoutSchema = yup.object().shape({
-  firstName: yup.string().required("required"),
-  lastName: yup.string().required("required"),
-  email: yup.string().email("invalid email").required("required"),
-  contact: yup
-    .string()
-    .matches(phoneRegExp, "Phone number is not valid")
-    .required("required"),
-  address1: yup.string().required("required"),
-  address2: yup.string().required("required"),
 });
-const initialValues = {
-  firstName: "",
-  lastName: "",
-  email: "",
-  contact: "",
-  address1: "",
-  address2: "",
-};
 
 export default Form;

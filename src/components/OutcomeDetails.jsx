@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Paper, 
@@ -21,77 +21,86 @@ import {
   CircularProgress,
   Alert,
   Collapse,
-  Chip,
   Grid,
   Divider,
-  useTheme
+  Switch,
+  FormControlLabel,
+  useTheme,
+  Chip
 } from '@mui/material';
 import { tokens } from "../theme";
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
-import WorkIcon from '@mui/icons-material/Work';
+import SchoolIcon from '@mui/icons-material/School';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import BuildIcon from '@mui/icons-material/Build';
 import TruncatedText from './TruncatedText';
 
-const JobDetails = ({ programId }) => {
+const OutcomeDetails = ({ programId }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const [jobs, setJobs] = useState([]);
+  const [outcomes, setOutcomes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
-  const [currentJob, setCurrentJob] = useState({ 
-    id: null, 
-    name: '', 
-    description: '', 
-    job_type: '', 
-    skills: '', 
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [currentOutcome, setCurrentOutcome] = useState({ 
+    id: null,
+    code: '',
+    learningOutcomeKz: '',
+    learningOutcomeRu: '',
+    learningOutcomeEn: '',
     programId 
   });
 
-  const fetchJobs = async () => {
+  const fetchOutcomes = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8081/programs/job/${programId}`);
-      if (!response.ok) throw new Error("Failed to fetch jobs");
+      const response = await fetch(`http://localhost:8081/programs/learningOutcome/${programId}`);
+      if (!response.ok) throw new Error("Failed to fetch learning outcomes");
       const data = await response.json();
-      setJobs(data);
+      setOutcomes(data);
       setError(null);
     } catch (error) {
       console.error(error.message);
-      setError(`Error loading jobs: ${error.message}`);
+      setError(`Error loading learning outcomes: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchJobs();
+    fetchOutcomes();
   }, [programId]);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
-    setCurrentJob({ ...currentJob, [name]: value });
+    setCurrentOutcome({ ...currentOutcome, [name]: value });
   };
 
-  const handleFormOpen = (job = null) => {
-    if (job) {
-      setCurrentJob({
-        id: job.id,
-        name: job.name || '',
-        description: job.description || '',
-        job_type: job.job_type || '',
-        skills: job.skills || '',
+  const handleFormOpen = (outcome = null) => {
+    if (outcome) {
+      setCurrentOutcome({
+        id: outcome.id,
+        code: outcome.code || '',
+        learningOutcomeKz: outcome.learningOutcomeKz || '',
+        learningOutcomeRu: outcome.learningOutcomeRu || '',
+        learningOutcomeEn: outcome.learningOutcomeEn || '',
         programId
       });
     } else {
-      setCurrentJob({ id: null, name: '', description: '', job_type: '', skills: '', programId });
+      setCurrentOutcome({ 
+        id: null, 
+        code: '', 
+        learningOutcomeKz: '', 
+        learningOutcomeRu: '', 
+        learningOutcomeEn: '', 
+        programId 
+      });
     }
     setFormOpen(true);
   };
@@ -103,23 +112,23 @@ const JobDetails = ({ programId }) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      if (currentJob.id) {
-        await updateJob(currentJob);
+      if (currentOutcome.id) {
+        await updateOutcome(currentOutcome);
       } else {
-        await createJob(currentJob);
+        await createOutcome(currentOutcome);
       }
       setFormOpen(false);
-      fetchJobs();
+      fetchOutcomes();
     } catch (error) {
-      setError(`Failed to save job: ${error.message}`);
+      setError(`Failed to save learning outcome: ${error.message}`);
     }
   };
 
-  const createJob = async (job) => {
-    const response = await fetch(`http://localhost:8081/job`, {
+  const createOutcome = async (outcome) => {
+    const response = await fetch(`http://localhost:8081/learningOutcome`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...job, programId }),
+      body: JSON.stringify({ ...outcome, programId }),
     });
     
     if (!response.ok) {
@@ -127,11 +136,11 @@ const JobDetails = ({ programId }) => {
     }
   };
 
-  const updateJob = async (job) => {
-    const response = await fetch(`http://localhost:8081/job/${job.id}`, {
+  const updateOutcome = async (outcome) => {
+    const response = await fetch(`http://localhost:8081/learningOutcome/${outcome.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...job, programId }),
+      body: JSON.stringify({ ...outcome, programId }),
     });
     
     if (!response.ok) {
@@ -146,38 +155,25 @@ const JobDetails = ({ programId }) => {
 
   const handleDeleteConfirm = async () => {
     try {
-      const response = await fetch(`http://localhost:8081/job/${deleteId}`, { method: 'DELETE' });
+      const response = await fetch(`http://localhost:8081/learningOutcome/${deleteId}`, { method: 'DELETE' });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      fetchJobs();
+      fetchOutcomes();
     } catch (error) {
-      setError(`Failed to delete job: ${error.message}`);
+      setError(`Failed to delete learning outcome: ${error.message}`);
     } finally {
       setOpenDialog(false);
       setDeleteId(null);
     }
   };
 
-  const generateJobs = async () => {
+  const generateOutcomes = async () => {
     setGenerating(true);
     try {
-      const response = await fetch(`http://localhost:8081/job/generate/${programId}`, { method: 'POST' });
+      const response = await fetch(`http://localhost:8081/learningOutcome/generate/${programId}`, { method: 'POST' });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      fetchJobs();
+      fetchOutcomes();
     } catch (error) {
-      setError(`Failed to generate jobs: ${error.message}`);
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const generateSkills = async () => {
-    setGenerating(true);
-    try {
-      const response = await fetch(`http://localhost:8081/job/skills/generate/${programId}`, { method: 'POST' });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      fetchJobs();
-    } catch (error) {
-      setError(`Failed to generate skills: ${error.message}`);
+      setError(`Failed to generate learning outcomes: ${error.message}`);
     } finally {
       setGenerating(false);
     }
@@ -188,11 +184,11 @@ const JobDetails = ({ programId }) => {
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <Typography variant="h5" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <WorkIcon sx={{ mr: 1 }} />
-            Job Management
+            <SchoolIcon sx={{ mr: 1 }} />
+            Learning Outcomes Management
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
-            Define and manage job roles relevant to this program. Jobs can be created manually or generated automatically.
+            Define and manage learning outcomes for this program. Learning outcomes describe what students should know or be able to do upon completion.
           </Typography>
         </Grid>
         <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
@@ -203,25 +199,16 @@ const JobDetails = ({ programId }) => {
               onClick={() => handleFormOpen()} 
               sx={{ bgcolor: colors.greenAccent[600] }}
             >
-              Add Job
+              Add Outcome
             </Button>
             <Button 
               variant="contained" 
               startIcon={<AutoFixHighIcon />} 
-              onClick={generateJobs}
+              onClick={generateOutcomes}
               disabled={generating}
               sx={{ bgcolor: colors.blueAccent[500] }}
             >
-              {generating ? <CircularProgress size={24} color="inherit" /> : "Generate Jobs"}
-            </Button>
-            <Button 
-              variant="contained" 
-              startIcon={<BuildIcon />} 
-              onClick={generateSkills}
-              disabled={generating}
-              sx={{ bgcolor: colors.blueAccent[700] }}
-            >
-              {generating ? <CircularProgress size={24} color="inherit" /> : "Generate Skills"}
+              {generating ? <CircularProgress size={24} color="inherit" /> : "Generate Outcomes"}
             </Button>
           </Box>
         </Grid>
@@ -244,14 +231,14 @@ const JobDetails = ({ programId }) => {
         </Alert>
       </Collapse>
 
-      {/* Jobs table */}
+      {/* Outcomes table */}
       <TableContainer component={Paper} elevation={3}>
         <Table sx={{ minWidth: 650 }}>
           <TableHead>
             <TableRow sx={{ bgcolor: colors.blueAccent[700] }}>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Job Title</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Description</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Job Type</TableCell>
+              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Code</TableCell>
+              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Outcome (English)</TableCell>
+              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Translations</TableCell>
               <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -260,38 +247,59 @@ const JobDetails = ({ programId }) => {
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
                   <CircularProgress size={30} />
-                  <Typography sx={{ mt: 1 }}>Loading jobs...</Typography>
+                  <Typography sx={{ mt: 1 }}>Loading learning outcomes...</Typography>
                 </TableCell>
               </TableRow>
-            ) : jobs.length === 0 ? (
+            ) : outcomes.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                  <Typography>No jobs available. Add a job or generate jobs.</Typography>
+                  <Typography>No learning outcomes available. Add an outcome or generate outcomes.</Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              jobs.map((job) => (
-                <TableRow key={job.id} hover>
-                  <TableCell sx={{ fontWeight: 'medium' }}>{job.name}</TableCell>
-                  <TableCell>
-                    <TruncatedText text={job.description} maxLength={100} />
-                  </TableCell>
+              outcomes.map((outcome) => (
+                <TableRow key={outcome.id} hover>
                   <TableCell>
                     <Chip 
-                      label={job.job_type || "Not specified"} 
-                      size="small"
-                      color={job.job_type ? "primary" : "default"}
-                      variant="outlined"
+                      label={outcome.code} 
+                      size="small" 
+                      color="white" 
+                      variant="outlined" 
                     />
+                  </TableCell>
+                  <TableCell>
+                    <TruncatedText text={outcome.learningOutcomeEn} maxLength={100} />
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      {outcome.learningOutcomeKz && (
+                        <Chip 
+                          label="KZ" 
+                          size="small" 
+                          color="secondary" 
+                          variant="outlined" 
+                          title={outcome.learningOutcomeKz}
+                        />
+                      )}
+                      {outcome.learningOutcomeRu && (
+                        <Chip 
+                          label="RU" 
+                          size="small" 
+                          color="secondary" 
+                          variant="outlined" 
+                          title={outcome.learningOutcomeRu}
+                        />
+                      )}
+                    </Box>
                   </TableCell>
                   <TableCell align="right">
                     <Tooltip title="Edit">
-                      <IconButton onClick={() => handleFormOpen(job)} size="small" sx={{ mr: 1 }}>
+                      <IconButton onClick={() => handleFormOpen(outcome)} size="small" sx={{ mr: 1 }}>
                         <EditIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Delete">
-                      <IconButton onClick={() => handleDeleteClick(job.id)} size="small" color="error">
+                      <IconButton onClick={() => handleDeleteClick(outcome.id)} size="small" color="error">
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
@@ -303,10 +311,10 @@ const JobDetails = ({ programId }) => {
         </Table>
       </TableContainer>
 
-      {/* Job form dialog */}
+      {/* Learning outcome form dialog */}
       <Dialog open={formOpen} onClose={handleFormClose} maxWidth="md" fullWidth>
         <DialogTitle>
-          {currentJob.id ? 'Edit Job' : 'Add New Job'}
+          {currentOutcome.id ? 'Edit Learning Outcome' : 'Add New Learning Outcome'}
           <IconButton
             aria-label="close"
             onClick={handleFormClose}
@@ -321,56 +329,79 @@ const JobDetails = ({ programId }) => {
               <Grid item xs={12}>
                 <TextField
                   autoFocus
-                  label="Job Title"
-                  name="name"
+                  label="Code"
+                  name="code"
                   fullWidth
-                  value={currentJob.name}
+                  value={currentOutcome.code}
                   onChange={handleInputChange}
                   required
                   variant="outlined"
+                  placeholder="e.g., LO1, PLO2"
+                  helperText="Unique identifier for this learning outcome"
                 />
               </Grid>
               <Grid item xs={12}>
                 <TextField
-                  label="Description"
-                  name="description"
+                  label="Learning Outcome (English)"
+                  name="learningOutcomeEn"
                   fullWidth
                   multiline
-                  rows={4}
-                  value={currentJob.description}
+                  rows={3}
+                  value={currentOutcome.learningOutcomeEn}
                   onChange={handleInputChange}
+                  required
                   variant="outlined"
+                  placeholder="Students will be able to..."
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Job Type"
-                  name="job_type"
-                  fullWidth
-                  value={currentJob.job_type}
-                  onChange={handleInputChange}
-                  variant="outlined"
+              
+              <Grid item xs={12} sx={{ mb: 2 }}>
+                <FormControlLabel 
+                  control={
+                    <Switch 
+                      checked={showAdvanced} 
+                      onChange={() => setShowAdvanced(!showAdvanced)} 
+                      color="primary"
+                    />
+                  } 
+                  label="Show translations" 
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Required Skills"
-                  name="skills"
-                  fullWidth
-                  multiline
-                  rows={2}
-                  value={currentJob.skills}
-                  onChange={handleInputChange}
-                  variant="outlined"
-                  helperText="Enter skills separated by commas"
-                />
-              </Grid>
+              
+              {showAdvanced && (
+                <>
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Learning Outcome (Kazakh)"
+                      name="learningOutcomeKz"
+                      fullWidth
+                      multiline
+                      rows={3}
+                      value={currentOutcome.learningOutcomeKz}
+                      onChange={handleInputChange}
+                      variant="outlined"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Learning Outcome (Russian)"
+                      name="learningOutcomeRu"
+                      fullWidth
+                      multiline
+                      rows={3}
+                      value={currentOutcome.learningOutcomeRu}
+                      onChange={handleInputChange}
+                      variant="outlined"
+                    />
+                  </Grid>
+                </>
+              )}
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>
             <Button onClick={handleFormClose} color="inherit">Cancel</Button>
             <Button type="submit" variant="contained" color="primary">
-              {currentJob.id ? 'Update' : 'Create'}
+              {currentOutcome.id ? 'Update' : 'Create'}
             </Button>
           </DialogActions>
         </form>
@@ -381,7 +412,7 @@ const JobDetails = ({ programId }) => {
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete this job? This action cannot be undone.
+            Are you sure you want to delete this learning outcome? This action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -395,4 +426,4 @@ const JobDetails = ({ programId }) => {
   );
 };
 
-export default JobDetails;
+export default OutcomeDetails;

@@ -4,110 +4,156 @@ import {
   useTheme,
   Button,
   Typography,
+  CircularProgress,
+  Tabs,
+  Tab,
+  Divider,
+  Breadcrumbs,
+  Link,
+  Paper,
+  Fade
 } from "@mui/material";
 import { tokens } from "../../theme";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import HomeIcon from '@mui/icons-material/Home';
+import WorkIcon from '@mui/icons-material/Work';
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
+import SchoolIcon from '@mui/icons-material/School';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import JobDetails from '../../components/JobDetails';
-
-const Job = () => (
-  <Box>
-    <Typography variant="h5">Job</Typography>
-    <Typography>Job-specific content goes here...</Typography>
-  </Box>
-);
-
-const Skill = () => (
-  <Box>
-    <Typography variant="h5">Skill</Typography>
-    <Typography>Skill-specific content goes here...</Typography>
-  </Box>
-);
-
-const Competency = () => (
-  <Box>
-    <Typography variant="h5">Competency</Typography>
-    <Typography>Competency-specific content goes here...</Typography>
-  </Box>
-);
-
-const TeachingResult = () => (
-  <Box>
-    <Typography variant="h5">Teaching Result</Typography>
-    <Typography>Teaching result-specific content goes here...</Typography>
-  </Box>
-);
-
-const CoursesComponent = () => (
-  <Box>
-    <Typography variant="h5">Courses Component</Typography>
-    <Typography>Courses component-specific content goes here...</Typography>
-  </Box>
-);
+import StandardDetails from '../../components/StandardDetails';
+import OutcomeDetails from '../../components/OutcomeDetails';
+import CourseDetails from '../../components/CourseDetails';
 
 const Generated = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const { program_id } = useParams();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [programData, setProgramData] = useState(null);
+  const [activeTab, setActiveTab] = useState(0);
 
   const sections = [
-    { id: "job", title: "Job", component: <JobDetails /> },
-    { id: "skill", title: "Skill", component: <Skill /> },
-    { id: "competency", title: "Competency", component: <Competency /> },
-    { id: "teachingResult", title: "Teaching Result", component: <TeachingResult /> },
-    { id: "coursesComponent", title: "Courses Component", component: <CoursesComponent /> },
+    { id: "job", title: "Jobs", icon: <WorkIcon />, component: <JobDetails programId={program_id} /> },
+    { id: "standard", title: "Standards", icon: <LibraryBooksIcon />, component: <StandardDetails programId={program_id}/> },
+    { id: "outcome", title: "Learning Outcomes", icon: <SchoolIcon />, component: <OutcomeDetails programId={program_id}/> },
+    { id: "courses", title: "Courses", icon: <AssignmentIcon />, component: <CourseDetails programId={program_id} /> },
   ];
 
-  const navigateToSection = (sectionId) => {
-    document.getElementById(sectionId).scrollIntoView({ behavior: "smooth" });
-  };
-
   useEffect(() => {
-    // Simulate data fetch
-    setTimeout(() => setLoading(false), 1000); // Mock loading delay
+    const fetchProgramDetails = async () => {
+      try {
+        const response = await fetch(`http://localhost:8081/programs/${program_id}`);
+        if (!response.ok) throw new Error("Failed to fetch program details");
+        const data = await response.json();
+        setProgramData(data);
+      } catch (error) {
+        console.error("Error fetching program details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProgramDetails();
   }, [program_id]);
 
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
+
   if (loading) {
-    return <Typography variant="h6">Loading...</Typography>;
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
+        <CircularProgress />
+        <Typography variant="h6" sx={{ ml: 2 }}>Loading program data...</Typography>
+      </Box>
+    );
   }
 
   return (
-    <Box m="20px">
-      {/* Sticky Navigation Bar */}
-      <Box
-        position="sticky"
-        top="0"
-        zIndex="1000"
-        bgcolor={colors}
-        p="10px"
-        boxShadow={2}
-        display="flex"
-        gap="10px"
-      >
-        {sections.map((section) => (
-          <Button
-            key={section.id}
-            variant="contained"
-            onClick={() => navigateToSection(section.id)}
+    <Box sx={{ maxWidth: "1400px", mx: "auto", px: 3, py: 2 }}>
+      {/* Breadcrumbs Navigation */}
+      <Paper elevation={0} sx={{ p: 2, mb: 3, bgcolor: colors.primary[400] }}>
+        <Breadcrumbs aria-label="breadcrumb">
+          <Link 
+            color="inherit" 
+            sx={{ display: 'flex', alignItems: 'center' }}
+            onClick={() => navigate('/')}
+            underline="hover"
           >
-            Go to {section.title}
-          </Button>
-        ))}
-      </Box>
+            <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
+            Dashboard
+          </Link>
+          <Link
+            color="inherit"
+            sx={{ display: 'flex', alignItems: 'center' }}
+            onClick={() => navigate('/programs')}
+            underline="hover"
+          >
+            Programs
+          </Link>
+          <Typography color="text.primary" sx={{ display: 'flex', alignItems: 'center' }}>
+            {programData?.nameEn || "Program Details"}
+          </Typography>
+        </Breadcrumbs>
+        
+        <Typography variant="h4" sx={{ mt: 2, fontWeight: 600 }}>
+          {programData?.nameEn || "Program Details"}
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          {programData?.description || "Manage program components and generate curriculum"}
+        </Typography>
+      </Paper>
 
-      {/* Render Each Section */}
-      {sections.map((section) => (
-        <Box
-          key={section.id}
-          id={section.id}
-          mb="20px"
-          p="20px"
-          border={`1px solid ${colors.grey[300]}`}
-          borderRadius="8px"
-          boxShadow={1}
+      {/* Tabs Navigation */}
+      <Paper sx={{ mb: 3 }}>
+        <Tabs 
+          value={activeTab}
+          onChange={handleTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: colors.primary[400],
+            color: colors.blueAccent[500] ,
+
+          }}
         >
-          {section.component}
-        </Box>
+          {sections.map((section, index) => (
+            <Tab 
+              key={section.id}
+              label={section.title}
+              icon={section.icon}
+              iconPosition="start"
+              sx={{ 
+                minHeight: 64,
+                textTransform: 'none',
+                fontSize: '1rem',
+                "&.Mui-selected": { 
+      color: colors.blueAccent[500], 
+    }
+              }}
+            />
+          ))}
+        </Tabs>
+      </Paper>
+
+      {/* Content Sections */}
+      {sections.map((section, index) => (
+        <Fade in={activeTab === index} key={section.id} timeout={300}>
+          <Box 
+            sx={{ 
+              display: activeTab === index ? 'block' : 'none',
+              bgcolor: colors.primary[400],
+              borderRadius: 2,
+              overflow: 'hidden'
+            }}
+          >
+            {section.component}
+          </Box>
+        </Fade>
       ))}
     </Box>
   );
