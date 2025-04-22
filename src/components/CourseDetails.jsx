@@ -38,6 +38,8 @@ const CourseDetails = ({ programId }) => {
   });
   const [selectedCourse, setSelectedCourse] = useState(null);
 
+  const dbUser = JSON.parse(localStorage.getItem('dbUser'));
+
   const fetchProgramCourses = async () => {
     try {
       const response = await fetch(`http://localhost:8081/programs/courseProgram/${programId}`);
@@ -51,7 +53,7 @@ const CourseDetails = ({ programId }) => {
 
   const fetchAvailableCourses = async () => {
     try {
-      const response = await fetch(`http://localhost:8081/course`);
+      const response = await fetch(`http://localhost:8081/course/user/${dbUser.id}`);
       if (!response.ok) throw new Error("Failed to fetch available courses");
       const data = await response.json();
       setAvailableCourses(data);

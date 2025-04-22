@@ -11,11 +11,11 @@ import EmojiObjectsIcon from '@mui/icons-material/EmojiObjects';
 import RecommendIcon from '@mui/icons-material/Recommend';
 
 import { tokens } from "../../theme";
-import { userId } from "../../data/mockData";
 import Header from "../../components/Header";
 import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = 'http://localhost:8081';
+const dbUser = JSON.parse(localStorage.getItem('dbUser'));
 
 const initialProgramState = {
   id: null,
@@ -30,13 +30,14 @@ const initialProgramState = {
   sqfLevel: 0,
   studyDurationYears: 0,
   creditsCount: 0,
-  createdById: userId,
+  createdById: dbUser.id,
 };
 
 const Programs = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const navigate = useNavigate();
+
 
   const [programs, setPrograms] = useState([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -49,7 +50,7 @@ const Programs = () => {
   const fetchPrograms = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/program`);
+      const response = await fetch(`${API_BASE_URL}/program/user/${dbUser.id}`);
 
       if (!response.ok) {
         throw new Error("Failed to fetch programs");
@@ -66,7 +67,7 @@ const Programs = () => {
 
   const handleCreateProgram = async (programData) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/program`, {
+      const response = await fetch(`${API_BASE_URL}/program/user/${dbUser.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(programData),
@@ -108,9 +109,9 @@ const Programs = () => {
 
   const handleDeleteProgram = async (id) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/program/${id}`, { 
-        method: "DELETE" 
-      });
+      const response = await fetch(`${API_BASE_URL}/program/user/${dbUser.id}`, { method: "DELETE" ,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(id)});
 
       if (!response.ok) {
         throw new Error("Failed to delete program");
@@ -185,8 +186,8 @@ const Programs = () => {
       const duplicatedProgram = {
         ...programToDuplicate,
         id: null,
-        codeName: `${programToDuplicate.codeName} (Copy)`,
-        createdById: userId
+        codeName: `${programToDuplicate.codeName}`,
+        createdById: dbUser.id
       };
       
       await handleCreateProgram(duplicatedProgram);
@@ -262,12 +263,6 @@ const Programs = () => {
           icon={<SecurityIcon />}
           label="Download PDF"
           onClick={() => showNotification('PDF download started', 'info')}
-          showInMenu
-        />,
-        <GridActionsCellItem
-          icon={<SettingsIcon />}
-          label="Edit Program"
-          onClick={() => navigateTo(`/program/${params.id}/edit`)}
           showInMenu
         />,
         <GridActionsCellItem

@@ -169,7 +169,7 @@ const Courses = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDuplicate = (courseData) => {
+  const handleDuplicate = async (courseData) => {
     const duplicatedCourse = {
       ...courseData,
       id: null,
@@ -182,10 +182,9 @@ const Courses = () => {
       briefInfoRu: `${courseData.briefInfoRu}`
 
     };
-    setCourse(duplicatedCourse);
-    setIsEditing(false);
-    setShowAdvanced(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    await handleCreateCourse(duplicatedCourse);
+    fetchCourses();
+
   };
 
   const handleSubmit = async (event) => {
