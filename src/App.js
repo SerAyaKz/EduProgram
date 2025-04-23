@@ -6,18 +6,19 @@ import Dashboard from "./scenes/dashboard";
 import Team from "./scenes/team";
 import Programs from "./scenes/programs";
 import Course from "./scenes/course";
-import Bar from "./scenes/bar";
 import Form from "./scenes/form";
-import Line from "./scenes/line";
-import Pie from "./scenes/pie";
 import FAQ from "./scenes/faq";
 import Program from "./scenes/program";
 import Generated from "./scenes/generated";
 import Recommendation from "./scenes/recommendation";
 import Login from "./scenes/auth"; // Import the login component
-import { CssBaseline, ThemeProvider, CircularProgress, Box } from "@mui/material";
+import {
+  CssBaseline,
+  ThemeProvider,
+  CircularProgress,
+  Box,
+} from "@mui/material";
 import { ColorModeContext, useMode } from "./theme";
-import Calendar from "./scenes/calendar/calendar";
 
 // Firebase imports
 import { initializeApp } from "firebase/app";
@@ -31,7 +32,7 @@ const firebaseConfig = {
   storageBucket: "eduprogrammaker.firebasestorage.app",
   messagingSenderId: "961124674211",
   appId: "1:961124674211:web:2c1e056837b39d39e3ad16",
-  measurementId: "G-7CW3ZXMXJC"
+  measurementId: "G-7CW3ZXMXJC",
 };
 
 // Initialize Firebase
@@ -42,23 +43,28 @@ const auth = getAuth(app);
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
-  
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setIsAuthenticated(!!user);
     });
-    
+
     return () => unsubscribe();
   }, []);
-  
+
   if (isAuthenticated === null) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+      >
         <CircularProgress />
       </Box>
     );
   }
-  
+
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
@@ -74,24 +80,80 @@ function App() {
         <CssBaseline />
         <div className="app">
           {!isLoginPage && <Sidebar isSidebar={isSidebar} />}
-          <main className="content" style={{ width: isLoginPage ? "100%" : undefined }}>
+          <main
+            className="content"
+            style={{ width: isLoginPage ? "100%" : undefined }}
+          >
             {!isLoginPage && <Topbar setIsSidebar={setIsSidebar} />}
             <Routes>
               <Route path="/login" element={<Login />} />
-              
+
               {/* Protected Routes */}
-              <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
-              <Route path="/courses" element={<ProtectedRoute><Course /></ProtectedRoute>} />
-              <Route path="/program" element={<ProtectedRoute><Programs /></ProtectedRoute>} />
-              <Route path="/program/:program_id" element={<ProtectedRoute><Generated /></ProtectedRoute>} />
-              <Route path="/recommendation/:program_id" element={<ProtectedRoute><Recommendation /></ProtectedRoute>} />
-              <Route path="/form" element={<ProtectedRoute><Form /></ProtectedRoute>} />
-              <Route path="/bar" element={<ProtectedRoute><Bar /></ProtectedRoute>} />
-              <Route path="/pie" element={<ProtectedRoute><Pie /></ProtectedRoute>} />
-              <Route path="/line" element={<ProtectedRoute><Line /></ProtectedRoute>} />
-              <Route path="/faq" element={<ProtectedRoute><FAQ /></ProtectedRoute>} />
-              <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/team"
+                element={
+                  <ProtectedRoute>
+                    <Team />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/courses"
+                element={
+                  <ProtectedRoute>
+                    <Course />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/program"
+                element={
+                  <ProtectedRoute>
+                    <Programs />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/program/:program_id"
+                element={
+                  <ProtectedRoute>
+                    <Generated />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/recommendation/:program_id"
+                element={
+                  <ProtectedRoute>
+                    <Recommendation />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/form"
+                element={
+                  <ProtectedRoute>
+                    <Form />
+                  </ProtectedRoute>
+                }
+              />
+              
+              <Route
+                path="/faq"
+                element={
+                  <ProtectedRoute>
+                    <FAQ />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
           </main>
         </div>
