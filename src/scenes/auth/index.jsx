@@ -26,6 +26,14 @@ const Login = () => {
     }
   });
 
+  const setupSessionTimeout = () => {
+    const SESSION_TIMEOUT = 60 * 60 * 1000; // 1 hour in milliseconds
+    
+    // Set the expiration time
+    const expirationTime = Date.now() + SESSION_TIMEOUT;
+    localStorage.setItem('sessionExpirationTime', expirationTime.toString());
+  };
+
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
@@ -60,7 +68,10 @@ const Login = () => {
       }
       const userData = await response.json();
       localStorage.setItem('dbUser', JSON.stringify(userData));
-      // Navigate to dashboard after successful login
+      localStorage.setItem('sessionStartTime', Date.now().toString());
+    
+      // Set up the session timeout
+      setupSessionTimeout();
       navigate("/");
     } catch (error) {
       // Handle authentication errors

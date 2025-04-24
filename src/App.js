@@ -12,6 +12,7 @@ import Program from "./scenes/program";
 import Generated from "./scenes/generated";
 import Recommendation from "./scenes/recommendation";
 import Login from "./scenes/auth"; // Import the login component
+import SessionManager from "./util/Session"; // Import the session manager
 import {
   CssBaseline,
   ThemeProvider,
@@ -78,6 +79,8 @@ function App() {
     <ColorModeContext.Provider value={colorMode}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
+        {/* Add Session Manager here */}
+        <SessionManager />
         <div className="app">
           {!isLoginPage && <Sidebar isSidebar={isSidebar} />}
           <main
@@ -97,6 +100,7 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              {/* Other routes remain the same */}
               <Route
                 path="/team"
                 element={
@@ -145,7 +149,6 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              
               <Route
                 path="/faq"
                 element={
