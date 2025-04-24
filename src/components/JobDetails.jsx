@@ -24,7 +24,11 @@ import {
   Chip,
   Grid,
   Divider,
-  useTheme
+  useTheme,
+  List,
+  ListItem,
+  ListItemText,
+  InputAdornment
 } from '@mui/material';
 import { tokens } from "../theme";
 import AddIcon from '@mui/icons-material/Add';
@@ -34,7 +38,9 @@ import CloseIcon from '@mui/icons-material/Close';
 import WorkIcon from '@mui/icons-material/Work';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import BuildIcon from '@mui/icons-material/Build';
+import SearchIcon from '@mui/icons-material/Search';
 import TruncatedText from './TruncatedText';
+import atlasProfessions from '../data/atlas_professions.json';
 
 const JobDetails = ({ programId }) => {
   const theme = useTheme();
@@ -51,9 +57,16 @@ const JobDetails = ({ programId }) => {
     name: '', 
     description: '', 
     job_type: '', 
-    skills: '', 
-    programId 
+    // skills: '', 
+    programId: Number(programId)
   });
+
+  // Atlas search states
+  const [atlasSearchOpen, setAtlasSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [creatingJob, setCreatingJob] = useState(false);
 
   const fetchJobs = async () => {
     setLoading(true);
@@ -75,6 +88,19 @@ const JobDetails = ({ programId }) => {
     fetchJobs();
   }, [programId]);
 
+  // Search through Atlas professions
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const filteredResults = atlasProfessions.filter(profession => {
+        const title = profession.title[selectedLanguage] || profession.title.en || profession.title.ru;
+        return title.toLowerCase().includes(searchQuery.toLowerCase());
+      });
+      setSearchResults(filteredResults);
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchQuery, selectedLanguage]);
+
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setCurrentJob({ ...currentJob, [name]: value });
@@ -87,11 +113,18 @@ const JobDetails = ({ programId }) => {
         name: job.name || '',
         description: job.description || '',
         job_type: job.job_type || '',
-        skills: job.skills || '',
-        programId
+        // skills: job.skills || '',
+        programId: Number(programId)
       });
     } else {
-      setCurrentJob({ id: null, name: '', description: '', job_type: '', skills: '', programId });
+      setCurrentJob({ 
+        id: null, 
+        name: '', 
+        description: '', 
+        job_type: '', 
+        // skills: '', 
+        programId: Number(programId)
+      });
     }
     setFormOpen(true);
   };
@@ -119,7 +152,7 @@ const JobDetails = ({ programId }) => {
     const response = await fetch(`http://localhost:8081/job`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...job, programId }),
+      body: JSON.stringify(job),
     });
     
     if (!response.ok) {
@@ -128,10 +161,11 @@ const JobDetails = ({ programId }) => {
   };
 
   const updateJob = async (job) => {
+    console.log(job)
     const response = await fetch(`http://localhost:8081/job/${job.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...job, programId }),
+      body: JSON.stringify(job),
     });
     
     if (!response.ok) {
@@ -183,6 +217,39 @@ const JobDetails = ({ programId }) => {
     }
   };
 
+  const handleOpenAtlasSearch = () => {
+    setAtlasSearchOpen(true);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  const handleCloseAtlasSearch = () => {
+    setAtlasSearchOpen(false);
+  };
+
+  const handleSelectProfession = async (profession) => {
+    const title = profession.title[selectedLanguage] || profession.title.en || profession.title.ru;
+    const description = profession.description[selectedLanguage] || profession.description.en || profession.description.ru;
+    
+    const newJob = {
+      name: title,
+      description: description,
+      job_type: 'atlas',
+      programId: Number(programId)
+    };
+    
+    setCreatingJob(true);
+    try {
+      await createJob(newJob);
+      fetchJobs();
+      setAtlasSearchOpen(false);
+    } catch (error) {
+      setError(`Failed to add job from Atlas: ${error.message}`);
+    } finally {
+      setCreatingJob(false);
+    }
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Grid container spacing={3}>
@@ -192,7 +259,7 @@ const JobDetails = ({ programId }) => {
             Job Management
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
-            Define and manage job roles relevant to this program. Jobs can be created manually or generated automatically.
+            Define and manage job roles relevant to this program. Jobs can be created manually or imported from Atlas.
           </Typography>
         </Grid>
         <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
@@ -204,6 +271,14 @@ const JobDetails = ({ programId }) => {
               sx={{ bgcolor: colors.greenAccent[600] }}
             >
               Add Job
+            </Button>
+            <Button 
+              variant="contained" 
+              startIcon={<SearchIcon />} 
+              onClick={handleOpenAtlasSearch}
+              sx={{ bgcolor: colors.blueAccent[600] }}
+            >
+              Search Atlas
             </Button>
             <Button 
               variant="contained" 
@@ -266,7 +341,7 @@ const JobDetails = ({ programId }) => {
             ) : jobs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                  <Typography>No jobs available. Add a job or generate jobs.</Typography>
+                  <Typography>No jobs available. Add a job, search Atlas, or generate jobs.</Typography>
                 </TableCell>
               </TableRow>
             ) : (
@@ -280,7 +355,7 @@ const JobDetails = ({ programId }) => {
                     <Chip 
                       label={job.job_type || "Not specified"} 
                       size="small"
-                      color={job.job_type ? "primary" : "default"}
+                      color={job.job_type === "atlas" ? "success" : job.job_type ? "primary" : "default"}
                       variant="outlined"
                     />
                   </TableCell>
@@ -352,7 +427,7 @@ const JobDetails = ({ programId }) => {
                   variant="outlined"
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              {/* <Grid item xs={12} md={6}>
                 <TextField
                   label="Required Skills"
                   name="skills"
@@ -364,11 +439,14 @@ const JobDetails = ({ programId }) => {
                   variant="outlined"
                   helperText="Enter skills separated by commas"
                 />
-              </Grid>
+              </Grid> */}
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>
             <Button onClick={handleFormClose} color="inherit">Cancel</Button>
+            <Button onClick={handleOpenAtlasSearch} color="primary">
+              Search Atlas
+            </Button>
             <Button type="submit" variant="contained" color="primary">
               {currentJob.id ? 'Update' : 'Create'}
             </Button>
@@ -389,6 +467,119 @@ const JobDetails = ({ programId }) => {
           <Button onClick={handleDeleteConfirm} color="error" variant="contained">
             Delete
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Atlas Search Dialog */}
+      <Dialog open={atlasSearchOpen} onClose={handleCloseAtlasSearch} maxWidth="md" fullWidth>
+        <DialogTitle>
+          Search Atlas Professions
+          <IconButton
+            aria-label="close"
+            onClick={handleCloseAtlasSearch}
+            sx={{ position: 'absolute', right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                autoFocus
+                fullWidth
+                label="Search for job titles"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                variant="outlined"
+                placeholder="Type to search..."
+                sx={{ mb: 2 }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                <Chip 
+                  label="English" 
+                  variant={selectedLanguage === 'en' ? 'filled' : 'outlined'}
+                  color={selectedLanguage === 'en' ? 'primary' : 'default'}
+                  onClick={() => setSelectedLanguage('en')}
+                  clickable
+                />
+                <Chip 
+                  label="Russian" 
+                  variant={selectedLanguage === 'ru' ? 'filled' : 'outlined'}
+                  color={selectedLanguage === 'ru' ? 'primary' : 'default'}
+                  onClick={() => setSelectedLanguage('ru')}
+                  clickable
+                />
+                <Chip 
+                  label="Kazakh" 
+                  variant={selectedLanguage === 'kk' ? 'filled' : 'outlined'}
+                  color={selectedLanguage === 'kk' ? 'primary' : 'default'}
+                  onClick={() => setSelectedLanguage('kk')}
+                  clickable
+                />
+              </Box>
+            </Grid>
+          </Grid>
+
+          {searchResults.length > 0 ? (
+            <List>
+              {searchResults.map((profession) => {
+                const title = profession.title[selectedLanguage] || profession.title.en || profession.title.ru;
+                const industry = profession.industry[selectedLanguage] || profession.industry.en || profession.industry.ru;
+                
+                return (
+                  <ListItem 
+                    key={profession.id} 
+                    button 
+                    onClick={() => handleSelectProfession(profession)}
+                    disabled={creatingJob}
+                    divider
+                    sx={{
+                      '&:hover': {
+                        bgcolor: colors.blueAccent[50],
+                      },
+                    }}
+                  >
+                    <ListItemText
+                      primary={
+                        <Typography variant="subtitle1" fontWeight="medium">
+                          {title}
+                        </Typography>
+                      }
+                      secondary={
+                        <Typography component="span" variant="body2" color="text.secondary">
+                          {industry}
+                        </Typography>
+                      }
+                    />
+                    {creatingJob && (
+                      <CircularProgress size={20} color="inherit" sx={{ ml: 2 }} />
+                    )}
+                  </ListItem>
+                );
+              })}
+            </List>
+          ) : searchQuery.trim() ? (
+            <Box sx={{ textAlign: 'center', py: 3 }}>
+              <Typography color="text.secondary">No matching jobs found. Try a different search term.</Typography>
+            </Box>
+          ) : (
+            <Box sx={{ textAlign: 'center', py: 3 }}>
+              <Typography color="text.secondary">Type to search for jobs in Atlas.</Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={handleCloseAtlasSearch} color="inherit">Cancel</Button>
         </DialogActions>
       </Dialog>
     </Box>

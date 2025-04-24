@@ -23,7 +23,9 @@ import {
   Collapse,
   Grid,
   Divider,
-  useTheme
+  useTheme,
+  InputAdornment,
+  Link
 } from '@mui/material';
 import { tokens } from "../theme";
 import AddIcon from '@mui/icons-material/Add';
@@ -32,6 +34,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import SearchIcon from '@mui/icons-material/Search';
+import LinkIcon from '@mui/icons-material/Link';
+import LaunchIcon from '@mui/icons-material/Launch';
+
+// Import professional standards data
+import profStandardsData from '../data/prof_standard.json';
 
 const StandardDetails = ({ programId }) => {
   const theme = useTheme();
@@ -48,8 +56,15 @@ const StandardDetails = ({ programId }) => {
     nameKz: '', 
     nameRu: '', 
     nameEn: '', 
-    programId 
+    programId,
+    url: '' // Added URL field
   });
+
+  // For professional standards search
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const fetchStandards = async () => {
     setLoading(true);
@@ -83,10 +98,11 @@ const StandardDetails = ({ programId }) => {
         nameKz: standard.nameKz || '',
         nameRu: standard.nameRu || '',
         nameEn: standard.nameEn || '',
-        programId
+        programId,
+        url: standard.url || ''
       });
     } else {
-      setCurrentStandard({ id: null, nameKz: '', nameRu: '', nameEn: '', programId });
+      setCurrentStandard({ id: null, nameKz: '', nameRu: '', nameEn: '', programId, url: '' });
     }
     setFormOpen(true);
   };
@@ -165,6 +181,62 @@ const StandardDetails = ({ programId }) => {
     }
   };
 
+  // Professional Standards search functions
+  const handleSearchDialogOpen = () => {
+    setSearchDialogOpen(true);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  const handleSearchDialogClose = () => {
+    setSearchDialogOpen(false);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleSearch = () => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearchLoading(true);
+    
+    // Search logic for professional standards
+    const query = searchQuery.toLowerCase();
+    const results = profStandardsData.filter(standard => 
+      standard.name_ru.toLowerCase().includes(query) || 
+      standard.name_en.toLowerCase().includes(query) || 
+      standard.name_kk.toLowerCase().includes(query) ||
+      standard.code_ps.toLowerCase().includes(query)
+    );
+
+    setSearchResults(results);
+    setSearchLoading(false);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handleSelectProfStandard = (profStandard) => {
+    setCurrentStandard({
+      id: null,
+      nameKz: profStandard.name_kk || '',
+      nameRu: profStandard.name_ru || '',
+      nameEn: profStandard.name_en || '',
+      programId,
+      url: profStandard.url || ''
+    });
+    
+    setSearchDialogOpen(false);
+    setFormOpen(true);
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Grid container spacing={3}>
@@ -174,7 +246,7 @@ const StandardDetails = ({ programId }) => {
             Standards Management
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
-            Define and manage educational standards for this program. Standards can be created manually or generated automatically.
+            Define and manage educational standards for this program. Standards can be created manually, imported from professional standards, or generated automatically.
           </Typography>
         </Grid>
         <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
@@ -186,6 +258,14 @@ const StandardDetails = ({ programId }) => {
               sx={{ bgcolor: colors.greenAccent[600] }}
             >
               Add Standard
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<SearchIcon />}
+              onClick={handleSearchDialogOpen}
+              sx={{ bgcolor: colors.blueAccent[400] }}
+            >
+              Search Prof Standards
             </Button>
             <Button 
               variant="contained" 
@@ -225,21 +305,22 @@ const StandardDetails = ({ programId }) => {
               <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name (Kazakh)</TableCell>
               <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name (Russian)</TableCell>
               <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name (English)</TableCell>
+              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Source Link</TableCell>
               <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
                   <CircularProgress size={30} />
                   <Typography sx={{ mt: 1 }}>Loading standards...</Typography>
                 </TableCell>
               </TableRow>
             ) : standards.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                  <Typography>No standards available. Add a standard or generate standards.</Typography>
+                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                  <Typography>No standards available. Add a standard, import from professional standards, or generate standards.</Typography>
                 </TableCell>
               </TableRow>
             ) : (
@@ -248,6 +329,22 @@ const StandardDetails = ({ programId }) => {
                   <TableCell>{standard.nameKz}</TableCell>
                   <TableCell>{standard.nameRu}</TableCell>
                   <TableCell>{standard.nameEn}</TableCell>
+                  <TableCell>
+                    {standard.url ? (
+                      <Link 
+                        href={standard.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        sx={{ display: 'flex', alignItems: 'center' }}
+                      >
+                        <LinkIcon fontSize="small" sx={{ mr: 0.5 }} />
+                        View Source
+                        <LaunchIcon fontSize="small" sx={{ ml: 0.5 }} />
+                      </Link>
+                    ) : (
+                      '-'
+                    )}
+                  </TableCell>
                   <TableCell align="right">
                     <Tooltip title="Edit">
                       <IconButton onClick={() => handleFormOpen(standard)} size="small" sx={{ mr: 1 }}>
@@ -316,6 +413,24 @@ const StandardDetails = ({ programId }) => {
                   variant="outlined"
                 />
               </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  label="Source URL (Optional)"
+                  name="url"
+                  fullWidth
+                  value={currentStandard.url}
+                  onChange={handleInputChange}
+                  variant="outlined"
+                  placeholder="https://example.com"
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LinkIcon />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>
@@ -340,6 +455,100 @@ const StandardDetails = ({ programId }) => {
           <Button onClick={handleDeleteConfirm} color="error" variant="contained">
             Delete
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Professional Standards Search Dialog */}
+      <Dialog 
+        open={searchDialogOpen} 
+        onClose={handleSearchDialogClose}
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle>
+          Search Professional Standards
+          <IconButton
+            aria-label="close"
+            onClick={handleSearchDialogClose}
+            sx={{ position: 'absolute', right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ mb: 3 }}>
+            <TextField
+              autoFocus
+              fullWidth
+              label="Search by name or code"
+              variant="outlined"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              onKeyDown={handleSearchKeyDown}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={handleSearch}>
+                      <SearchIcon />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+              Search by standard name (in any language) or code
+            </Typography>
+          </Box>
+
+          {searchLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+              <CircularProgress />
+            </Box>
+          ) : searchResults.length > 0 ? (
+            <TableContainer component={Paper} variant="outlined">
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Code</TableCell>
+                    <TableCell>Name (RU)</TableCell>
+                    <TableCell>Name (KZ)</TableCell>
+                    <TableCell>Name (EN)</TableCell>
+                    <TableCell align="right">Action</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {searchResults.map((result) => (
+                    <TableRow key={result.id} hover>
+                      <TableCell>{result.code_ps}</TableCell>
+                      <TableCell>{result.name_ru}</TableCell>
+                      <TableCell>{result.name_kk}</TableCell>
+                      <TableCell>{result.name_en}</TableCell>
+                      <TableCell align="right">
+                        <Button
+                          size="small"
+                          variant="contained"
+                          onClick={() => handleSelectProfStandard(result)}
+                        >
+                          Select
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : searchQuery ? (
+            <Box sx={{ textAlign: 'center', py: 3 }}>
+              <Typography>No standards found for "{searchQuery}"</Typography>
+            </Box>
+          ) : (
+            <Box sx={{ textAlign: 'center', py: 3 }}>
+              <Typography>Enter a search term to find professional standards</Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleSearchDialogClose} color="inherit">Cancel</Button>
         </DialogActions>
       </Dialog>
     </Box>
