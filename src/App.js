@@ -74,12 +74,39 @@ function App() {
   const [isSidebar, setIsSidebar] = useState(true);
   const location = useLocation();
   const isLoginPage = location.pathname === "/login";
+  
+  // Add a state to track authentication status globally
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsAuthenticated(!!user);
+      setAuthChecked(true);
+    });
+    
+    return () => unsubscribe();
+  }, []);
+  
+  // Show loading while checking authentication
+  if (!authChecked) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <ColorModeContext.Provider value={colorMode}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        {/* Add Session Manager here */}
+        {/* Session Manager */}
         <SessionManager />
         <div className="app">
           {!isLoginPage && <Sidebar isSidebar={isSidebar} />}
@@ -89,7 +116,11 @@ function App() {
           >
             {!isLoginPage && <Topbar setIsSidebar={setIsSidebar} />}
             <Routes>
-              <Route path="/login" element={<Login />} />
+              {/* Login route - redirect to dashboard if already authenticated */}
+              <Route 
+                path="/login" 
+                element={isAuthenticated ? <Navigate to="/" /> : <Login />} 
+              />
 
               {/* Protected Routes */}
               <Route
@@ -100,7 +131,6 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              {/* Other routes remain the same */}
               <Route
                 path="/team"
                 element={
@@ -156,6 +186,12 @@ function App() {
                     <FAQ />
                   </ProtectedRoute>
                 }
+              />
+              
+              {/* Catch all unknown routes and redirect based on authentication status */}
+              <Route 
+                path="*" 
+                element={isAuthenticated ? <Navigate to="/" /> : <Navigate to="/login" />} 
               />
             </Routes>
           </main>

@@ -15,30 +15,31 @@ import Header from "../../components/Header";
 import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = 'http://localhost:8081';
-const dbUser = JSON.parse(localStorage.getItem('dbUser'));
 
-const initialProgramState = {
-  id: null,
-  codeName: "",
-  academicDegree: "",
-  eduGoalKz: "",
-  eduGoalRu: "",
-  eduGoalEn: "",
-  directionCodeName: "",
-  iscedLevel: 0,
-  nqfLevel: 0,
-  sqfLevel: 0,
-  studyDurationYears: 0,
-  creditsCount: 0,
-  createdById: dbUser.id,
-};
 
 const Programs = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const navigate = useNavigate();
 
+  const dbUser = JSON.parse(localStorage.getItem('dbUser'));
 
+  const initialProgramState = {
+    id: null,
+    codeName: "",
+    academicDegree: "",
+    eduGoalKz: "",
+    eduGoalRu: "",
+    eduGoalEn: "",
+    directionCodeName: "",
+    iscedLevel: 0,
+    nqfLevel: 0,
+    sqfLevel: 0,
+    studyDurationYears: 0,
+    creditsCount: 0,
+    createdById: dbUser.id
+  };
+  
   const [programs, setPrograms] = useState([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [program, setProgram] = useState(initialProgramState);
