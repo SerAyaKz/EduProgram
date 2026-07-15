@@ -1,86 +1,104 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  getAuth, 
-  signInWithPopup, 
+import {
+  getAuth,
+  signInWithPopup,
   GoogleAuthProvider,
-  onAuthStateChanged 
+  onAuthStateChanged,
 } from "firebase/auth";
 import { Box, Button, Typography, useTheme } from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google";
+import { useTranslation } from "react-i18next";
 import { tokens } from "../../theme";
 
 const Login = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
   const auth = getAuth();
   const provider = new GoogleAuthProvider();
 
-  // Check if user is already logged in
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      navigate("/");
-    }
-  });
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        navigate("/");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [auth, navigate]);
 
   const setupSessionTimeout = () => {
-    const SESSION_TIMEOUT = 60 * 60 * 1000; // 1 hour in milliseconds
-    
-    // Set the expiration time
+    const SESSION_TIMEOUT = 60 * 60 * 1000;
+
     const expirationTime = Date.now() + SESSION_TIMEOUT;
-    localStorage.setItem('sessionExpirationTime', expirationTime.toString());
+    localStorage.setItem(
+      "sessionExpirationTime",
+      expirationTime.toString()
+    );
   };
 
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
       setError("");
-      
-      // Firebase authentication
+
       const result = await signInWithPopup(auth, provider);
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      const token = credential.accessToken;
       const user = result.user;
-      
-      // Register user in the backend using fetch
-      const response = await fetch('http://localhost:8081/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: 0,
-          uid: user.uid,
-          displayName: user.displayName,
-          email: user.email,
-          photoUrl: user.photoURL,
-          title: "",
-          roleId: 1
-        })
-      });
-      
+
+      await GoogleAuthProvider.credentialFromResult(result);
+
+      const response = await fetch(
+        "http://localhost:8081/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: 0,
+            uid: user.uid,
+            displayName: user.displayName,
+            email: user.email,
+            photoUrl: user.photoURL,
+            title: "",
+            roleId: 1,
+          }),
+        }
+      );
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to register user in the backend');
+        throw new Error(
+          errorData.message || t("login.backendError")
+        );
       }
+
       const userData = await response.json();
-      localStorage.setItem('dbUser', JSON.stringify(userData));
-      localStorage.setItem('sessionStartTime', Date.now().toString());
-    
-      // Set up the session timeout
+
+      localStorage.setItem("dbUser", JSON.stringify(userData));
+      localStorage.setItem(
+        "sessionStartTime",
+        Date.now().toString()
+      );
+
       setupSessionTimeout();
+
       navigate("/");
     } catch (error) {
-      // Handle authentication errors
       console.error("Error during authentication:", error);
-      
-      if (error.code === 'auth/popup-closed-by-user') {
-        setError("Sign-in canceled. Please try again.");
+
+      if (error.code === "auth/popup-closed-by-user") {
+        setError(t("login.popupClosed"));
       } else {
-        setError(`Authentication failed: ${error.message}`);
+        setError(
+          `${t("login.authFailed")}: ${error.message}`
+        );
       }
     } finally {
       setLoading(false);
@@ -106,12 +124,18 @@ const Login = () => {
         boxShadow="0px 10px 40px -10px rgba(0,0,0,0.2)"
       >
         <Typography variant="h2" textAlign="center" mb="20px">
-          Welcome to EduProgramMaker
+          {t("login.title")}
         </Typography>
-        <Typography variant="h5" textAlign="center" mb="30px" color={colors.greenAccent[400]}>
-          Sign in to access your dashboard
+
+        <Typography
+          variant="h5"
+          textAlign="center"
+          mb="30px"
+          color={colors.greenAccent[400]}
+        >
+          {t("login.subtitle")}
         </Typography>
-        
+
         <Button
           variant="contained"
           fullWidth
@@ -128,9 +152,11 @@ const Login = () => {
             },
           }}
         >
-          {loading ? "Signing in..." : "Sign in with Google"}
+          {loading
+            ? t("login.signingIn")
+            : t("login.google")}
         </Button>
-        
+
         {error && (
           <Typography color="error" mt="20px" textAlign="center">
             {error}

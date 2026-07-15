@@ -12,7 +12,6 @@ import Program from "./scenes/program";
 import Generated from "./scenes/generated";
 import Recommendation from "./scenes/recommendation";
 import Login from "./scenes/auth"; // Import the login component
-import SessionManager from "./util/Session"; // Import the session manager
 import {
   CssBaseline,
   ThemeProvider,
@@ -25,6 +24,9 @@ import { ColorModeContext, useMode } from "./theme";
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+
+import "./util/i18n";
+import SessionManager from "./util/Session"; // Import the session manager
 
 const firebaseConfig = {
   apiKey: "AIzaSyAUDyXBYoLESgG9ecLo3qUrWbxS5KhTM2c",
@@ -114,7 +116,7 @@ function App() {
             className="content"
             style={{ width: isLoginPage ? "100%" : undefined }}
           >
-            {!isLoginPage && <Topbar setIsSidebar={setIsSidebar} />}
+            {isLoginPage && <Topbar setIsSidebar={setIsSidebar} />}
             <Routes>
               {/* Login route - redirect to dashboard if already authenticated */}
               <Route 

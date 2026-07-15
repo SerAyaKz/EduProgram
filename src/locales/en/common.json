@@ -1,0 +1,14 @@
+{
+  "profile": "Profile",
+  "logout": "Logout",
+
+  "login": {
+    "title": "Welcome to Designer of Educational Programs",
+    "subtitle": "Sign in to access your dashboard",
+    "google": "Sign in with Google",
+    "signingIn": "Signing in...",
+    "popupClosed": "Sign-in canceled. Please try again.",
+    "authFailed": "Authentication failed",
+    "backendError": "Failed to register user in the backend"
+  }
+}

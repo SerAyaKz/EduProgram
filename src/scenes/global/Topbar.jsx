@@ -6,6 +6,7 @@ import {
   Avatar,
   Menu,
   MenuItem,
+  Select
 } from "@mui/material";
 import { useContext, useState, useEffect } from "react";
 import { ColorModeContext, tokens } from "../../theme";
@@ -17,9 +18,13 @@ import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import SearchIcon from "@mui/icons-material/Search";
 import LogoutIcon from "@mui/icons-material/Logout";
+
 import { getAuth, signOut } from "firebase/auth";
+
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
+
+import { useTranslation } from "react-i18next";
 
 const Topbar = ({ setIsSidebar }) => {
   const theme = useTheme();
@@ -52,6 +57,12 @@ const Topbar = ({ setIsSidebar }) => {
       console.error("Error signing out:", error);
     }
   };
+// language switching
+  const { t, i18n } = useTranslation();
+
+  const handleLanguageChange = (event) => {
+    i18n.changeLanguage(event.target.value);
+  };
 
   return (
     <Box display="flex" justifyContent="space-between" p={2}>
@@ -66,9 +77,30 @@ const Topbar = ({ setIsSidebar }) => {
           <SearchIcon />
         </IconButton> */}
       </Box>
+      
+          
 
       {/* ICONS */}
       <Box display="flex">
+
+        <Select
+    size="small"
+    value={i18n.language.split("-")[0]}
+    onChange={handleLanguageChange}
+    sx={{
+      minWidth: 90,
+      mr: 1,
+      color: theme.palette.text.primary,
+      "& fieldset": {
+        border: "none",
+      },
+    }}
+  >
+    <MenuItem value="en">Eng</MenuItem>
+    <MenuItem value="ru">Рус</MenuItem>
+    <MenuItem value="kk">Қаз</MenuItem>
+  </Select>
+
         <IconButton onClick={colorMode.toggleColorMode}>
           {theme.palette.mode === "dark" ? (
             <DarkModeOutlinedIcon />
@@ -111,18 +143,18 @@ const Topbar = ({ setIsSidebar }) => {
           }}
         >
           <MenuItem onClick={handleClose}>
-            <Link
-              to="/form"
-              style={{ textDecoration: "none", color: "inherit" }}
-            >
-              Profile
-            </Link>
-          </MenuItem>
+  <Link
+    to="/form"
+    style={{ textDecoration: "none", color: "inherit" }}
+  >
+    {t("profile")}
+  </Link>
+</MenuItem>
 
-          <MenuItem onClick={handleLogout}>
-            <LogoutIcon fontSize="small" style={{ marginRight: 8 }} />
-            Logout
-          </MenuItem>
+<MenuItem onClick={handleLogout}>
+  <LogoutIcon fontSize="small" sx={{ mr: 1 }} />
+  {t("logout")}
+</MenuItem>
         </Menu>
       </Box>
     </Box>
