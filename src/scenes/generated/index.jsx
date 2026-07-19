@@ -2,12 +2,10 @@ import React, { useState, useEffect } from "react";
 import {
   Box,
   useTheme,
-  Button,
   Typography,
   CircularProgress,
   Tabs,
   Tab,
-  Divider,
   Breadcrumbs,
   Link,
   Paper,
@@ -24,6 +22,7 @@ import JobDetails from '../../components/JobDetails';
 import StandardDetails from '../../components/StandardDetails';
 import OutcomeDetails from '../../components/OutcomeDetails';
 import CourseDetails from '../../components/CourseDetails';
+import { useTranslation } from "react-i18next";
 
 const Generated = () => {
   const theme = useTheme();
@@ -33,40 +32,105 @@ const Generated = () => {
   const [loading, setLoading] = useState(true);
   const [programData, setProgramData] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
+//Language
+  const { t,i18n  } = useTranslation();
 
-  const sections = [
-    { id: "job", title: "Jobs", icon: <WorkIcon />, component: <JobDetails programId={program_id} /> },
-    { id: "standard", title: "Standards", icon: <LibraryBooksIcon />, component: <StandardDetails programId={program_id}/> },
-    { id: "outcome", title: "Learning Outcomes", icon: <SchoolIcon />, component: <OutcomeDetails programId={program_id}/> },
-    { id: "courses", title: "Courses", icon: <AssignmentIcon />, component: <CourseDetails programId={program_id} /> },
-  ];
+  const langMap = {
+  en: "En",
+  ru: "Ru",
+  kk: "Kz"
+};
 
-  useEffect(() => {
-    const fetchProgramDetails = async () => {
-      try {
-        const response = await fetch(`http://localhost:8081/programs/${program_id}`);
-        if (!response.ok) throw new Error("Failed to fetch program details");
-        const data = await response.json();
-        setProgramData(data);
-      } catch (error) {
-        console.error("Error fetching program details:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+const getProgramField = (field) => {
+  const suffix = langMap[i18n.language] || "En"
+  return programData?.program?.[`${field}${suffix}`] ?? "";
+};
+// Fetching
+const fetchProgramData = async () => {
+  try {
+    setLoading(true);
 
-    fetchProgramDetails();
-  }, [program_id]);
+    const response = await fetch(
+      `http://localhost:8081/program/data/${program_id}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch program details");
+    }
+
+    const data = await response.json();
+    setProgramData(data);
+  } catch (error) {
+    console.error("Error fetching program details:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+useEffect(() => {
+  fetchProgramData();
+}, [program_id]);
+
+
+const sections = [
+  {
+    id: "job",
+    title: t("generated.jobs"),
+    icon: <WorkIcon />,
+    component: (
+      <JobDetails
+        jobs={programData?.jobs ?? []}
+        programId={program_id}
+        onRefresh={fetchProgramData}
+      />
+    ),
+  },
+  {
+    id: "standard",
+    title: t("generated.standards"),
+    icon: <LibraryBooksIcon />,
+    component: <StandardDetails standards={programData?.standards ?? []} />,
+  },
+  {
+    id: "outcome",
+    title: t("generated.learningOutcomes"),
+    icon: <SchoolIcon />,
+    component: <OutcomeDetails outcomes={programData?.outcomes ?? []} />,
+  },
+  {
+    id: "courses",
+    title: t("generated.courses"),
+    icon: <AssignmentIcon />,
+    component: <CourseDetails courses={programData?.courses ?? []} />,
+  },
+];
+
+  // useEffect(() => {
+  //   const fetchProgramDetails = async () => {
+  //     try {
+  //       const response = await fetch(`http://localhost:8081/program/data/${program_id}`);
+  //       if (!response.ok) throw new Error("Failed to fetch program details");
+  //       const data = await response.json();
+  //       setProgramData(data);
+  //     } catch (error) {
+  //       console.error("Error fetching program details:", error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchProgramDetails();
+  // }, [program_id]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
-
+  
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="80vh">
         <CircularProgress />
-        <Typography variant="h6" sx={{ ml: 2 }}>Loading program data...</Typography>
+        <Typography variant="h6" sx={{ ml: 2 }}>{t("generated.loadingProgramData")}</Typography>
       </Box>
     );
   }
@@ -83,26 +147,27 @@ const Generated = () => {
             underline="hover"
           >
             <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
-            Dashboard
+             {t("navigation.dashboard")}
           </Link>
           <Link
             color="inherit"
             sx={{ display: 'flex', alignItems: 'center' }}
-            onClick={() => navigate('/programs')}
+            onClick={() => navigate('/program')}
             underline="hover"
           >
-            Programs
+            {t("navigation.programs")}
           </Link>
           <Typography color="text.primary" sx={{ display: 'flex', alignItems: 'center' }}>
-            {programData?.nameEn || "Program Details"}
+            {t("navigation.programDetails")}
           </Typography>
         </Breadcrumbs>
         
         <Typography variant="h4" sx={{ mt: 2, fontWeight: 600 }}>
-          {programData?.nameEn || "Program Details"}
+          {programData?.program?.codeName}
         </Typography>
+        {/* I would like to change based on language eduGoalKz eduGoalRu */}
         <Typography variant="body1" color="text.secondary">
-          {programData?.description || "Manage program components and generate curriculum"}
+          {getProgramField("eduGoal")}
         </Typography>
       </Paper>
 

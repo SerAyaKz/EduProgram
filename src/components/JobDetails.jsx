@@ -41,25 +41,32 @@ import BuildIcon from '@mui/icons-material/Build';
 import SearchIcon from '@mui/icons-material/Search';
 import TruncatedText from './TruncatedText';
 import atlasProfessions from '../data/atlas_professions.json';
+import { useTranslation } from "react-i18next";
 
-const JobDetails = ({ programId }) => {
+const JobDetails = ({
+    jobs,
+    programId,
+    onRefresh
+}) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const [jobs, setJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
-  const [currentJob, setCurrentJob] = useState({ 
-    id: null, 
-    name: '', 
-    description: '', 
-    job_type: '', 
-    // skills: '', 
+  const [currentJob, setCurrentJob] = useState({
+    id: null,
+    nameEn: '',
+    descriptionEn: '',
+    nameRu: '',
+    descriptionRu: '',
+    nameKz: '',
+    descriptionKz: '',
+    job_type: '',
     programId: Number(programId)
-  });
+});
 
   // Atlas search states
   const [atlasSearchOpen, setAtlasSearchOpen] = useState(false);
@@ -68,25 +75,7 @@ const JobDetails = ({ programId }) => {
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [creatingJob, setCreatingJob] = useState(false);
 
-  const fetchJobs = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`http://localhost:8081/programs/job/${programId}`);
-      if (!response.ok) throw new Error("Failed to fetch jobs");
-      const data = await response.json();
-      setJobs(data);
-      setError(null);
-    } catch (error) {
-      console.error(error.message);
-      setError(`Error loading jobs: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchJobs();
-  }, [programId]);
+  const { t,i18n } = useTranslation();
 
   // Search through Atlas professions
   useEffect(() => {
@@ -109,21 +98,27 @@ const JobDetails = ({ programId }) => {
   const handleFormOpen = (job = null) => {
     if (job) {
       setCurrentJob({
-        id: job.id,
-        name: job.name || '',
-        description: job.description || '',
-        job_type: job.job_type || '',
-        // skills: job.skills || '',
-        programId: Number(programId)
-      });
+    id: job.id,
+    nameEn: job.nameEn || '',
+    descriptionEn: job.descriptionEn || '',
+    nameRu: job.nameRu || '',
+    descriptionRu: job.descriptionRu || '',
+    nameKz: job.nameKz || '',
+    descriptionKz: job.descriptionKz || '',
+    job_type: job.job_type || '',
+    programId: Number(programId)
+});
     } else {
       setCurrentJob({ 
-        id: null, 
-        name: '', 
-        description: '', 
-        job_type: '', 
-        // skills: '', 
-        programId: Number(programId)
+        id: null,
+    nameEn: '',
+    descriptionEn: '',
+    nameRu: '',
+    descriptionRu: '',
+    nameKz: '',
+    descriptionKz: '',
+    job_type: '',
+    programId: Number(programId)
       });
     }
     setFormOpen(true);
@@ -142,7 +137,7 @@ const JobDetails = ({ programId }) => {
         await createJob(currentJob);
       }
       setFormOpen(false);
-      fetchJobs();
+      await onRefresh();
     } catch (error) {
       setError(`Failed to save job: ${error.message}`);
     }
@@ -182,7 +177,7 @@ const JobDetails = ({ programId }) => {
     try {
       const response = await fetch(`http://localhost:8081/job/${deleteId}`, { method: 'DELETE' });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      fetchJobs();
+      await onRefresh();
     } catch (error) {
       setError(`Failed to delete job: ${error.message}`);
     } finally {
@@ -196,7 +191,7 @@ const JobDetails = ({ programId }) => {
     try {
       const response = await fetch(`http://localhost:8081/job/generate/${programId}`, { method: 'POST' });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      fetchJobs();
+      await onRefresh();
     } catch (error) {
       setError(`Failed to generate jobs: ${error.message}`);
     } finally {
@@ -209,7 +204,7 @@ const JobDetails = ({ programId }) => {
     try {
       const response = await fetch(`http://localhost:8081/job/skills/generate/${programId}`, { method: 'POST' });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      fetchJobs();
+      await onRefresh();
     } catch (error) {
       setError(`Failed to generate skills: ${error.message}`);
     } finally {
@@ -232,16 +227,23 @@ const JobDetails = ({ programId }) => {
     const description = profession.description[selectedLanguage] || profession.description.en || profession.description.ru;
     
     const newJob = {
-      name: title,
-      description: description,
-      job_type: 'atlas',
-      programId: Number(programId)
-    };
+    nameEn: profession.title.en || '',
+    descriptionEn: profession.description.en || '',
+
+    nameRu: profession.title.ru || '',
+    descriptionRu: profession.description.ru || '',
+
+    nameKz: profession.title.kk || '',
+    descriptionKz: profession.description.kk || '',
+
+    job_type: 'atlas',
+    programId: Number(programId)
+};
     
     setCreatingJob(true);
     try {
       await createJob(newJob);
-      fetchJobs();
+      await onRefresh();
       setAtlasSearchOpen(false);
     } catch (error) {
       setError(`Failed to add job from Atlas: ${error.message}`);
@@ -331,14 +333,7 @@ const JobDetails = ({ programId }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                  <CircularProgress size={30} />
-                  <Typography sx={{ mt: 1 }}>Loading jobs...</Typography>
-                </TableCell>
-              </TableRow>
-            ) : jobs.length === 0 ? (
+            {jobs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
                   <Typography>No jobs available. Add a job, search Atlas, or generate jobs.</Typography>
@@ -347,15 +342,25 @@ const JobDetails = ({ programId }) => {
             ) : (
               jobs.map((job) => (
                 <TableRow key={job.id} hover>
-                  <TableCell sx={{ fontWeight: 'medium' }}>{job.name}</TableCell>
+                  <TableCell sx={{ fontWeight: 'medium' }}>{i18n.language === 'ru'
+    ? job.nameRu
+    : i18n.language === 'kk'
+    ? job.nameKz
+    : job.nameEn}</TableCell>
                   <TableCell>
-                    <TruncatedText text={job.description} maxLength={100} />
+                    <TruncatedText  text={
+        i18n.language === 'ru'
+            ? job.descriptionRu
+            : i18n.language === 'kk'
+            ? job.descriptionKz
+            : job.descriptionEn
+    } maxLength={100} />
                   </TableCell>
                   <TableCell>
                     <Chip 
-                      label={job.job_type || "Not specified"} 
+                      label={job.job_type || "Added by user"} 
                       size="small"
-                      color={job.job_type === "atlas" ? "success" : job.job_type ? "primary" : "default"}
+                      color={job.job_type === "atlas" ? "success" : job.job_type ? "default" : "default"}
                       variant="outlined"
                     />
                   </TableCell>
@@ -397,9 +402,9 @@ const JobDetails = ({ programId }) => {
                 <TextField
                   autoFocus
                   label="Job Title"
-                  name="name"
+                  name="nameEn"
                   fullWidth
-                  value={currentJob.name}
+                  value={currentJob.nameEn}
                   onChange={handleInputChange}
                   required
                   variant="outlined"
@@ -408,16 +413,64 @@ const JobDetails = ({ programId }) => {
               <Grid item xs={12}>
                 <TextField
                   label="Description"
-                  name="description"
+                  name="descriptionEn"
                   fullWidth
                   multiline
                   rows={4}
-                  value={currentJob.description}
+                  value={currentJob.descriptionEn}
                   onChange={handleInputChange}
                   variant="outlined"
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12}>
+                <TextField
+                  autoFocus
+                  label="Job Title"
+                  name="nameRu"
+                  fullWidth
+                  value={currentJob.nameRu}
+                  onChange={handleInputChange}
+                  required
+                  variant="outlined"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  label="Description"
+                  name="descriptionRu"
+                  fullWidth
+                  multiline
+                  rows={4}
+                  value={currentJob.descriptionRu}
+                  onChange={handleInputChange}
+                  variant="outlined"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  autoFocus
+                  label="Job Title"
+                  name="nameKz"
+                  fullWidth
+                  value={currentJob.nameKz}
+                  onChange={handleInputChange}
+                  required
+                  variant="outlined"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  label="Description"
+                  name="descriptionKz"
+                  fullWidth
+                  multiline
+                  rows={4}
+                  value={currentJob.descriptionKz}
+                  onChange={handleInputChange}
+                  variant="outlined"
+                />
+              </Grid>
+              {/* <Grid item xs={12} md={6}>
                 <TextField
                   label="Job Type"
                   name="job_type"
@@ -426,7 +479,7 @@ const JobDetails = ({ programId }) => {
                   onChange={handleInputChange}
                   variant="outlined"
                 />
-              </Grid>
+              </Grid> */}
               {/* <Grid item xs={12} md={6}>
                 <TextField
                   label="Required Skills"
@@ -444,9 +497,6 @@ const JobDetails = ({ programId }) => {
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>
             <Button onClick={handleFormClose} color="inherit">Cancel</Button>
-            <Button onClick={handleOpenAtlasSearch} color="primary">
-              Search Atlas
-            </Button>
             <Button type="submit" variant="contained" color="primary">
               {currentJob.id ? 'Update' : 'Create'}
             </Button>

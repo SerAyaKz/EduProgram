@@ -10,5 +10,18 @@
     "popupClosed": "Вход отменён. Попробуйте ещё раз.",
     "authFailed": "Ошибка аутентификации",
     "backendError": "Не удалось зарегистрировать пользователя"
+  },
+  "navigation": {
+    "dashboard": "Панель управления",
+    "programs": "Программы",
+    "programDetails": "Детали программы"
+  },
+
+  "generated": {
+    "loadingProgramData": "Загрузка данных программы...",
+    "jobs": "Профессии",
+    "standards": "Стандарты",
+    "learningOutcomes": "Результаты обучения",
+    "courses": "Курсы"
   }
 }

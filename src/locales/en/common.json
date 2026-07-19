@@ -10,5 +10,19 @@
     "popupClosed": "Sign-in canceled. Please try again.",
     "authFailed": "Authentication failed",
     "backendError": "Failed to register user in the backend"
+  },
+  
+  "navigation": {
+    "dashboard": "Dashboard",
+    "programs": "Programs",
+    "programDetails": "Program Details"
+  },
+
+  "generated": {
+    "loadingProgramData": "Loading program data...",
+    "jobs": "Jobs",
+    "standards": "Standards",
+    "learningOutcomes": "Learning Outcomes",
+    "courses": "Courses"
   }
 }

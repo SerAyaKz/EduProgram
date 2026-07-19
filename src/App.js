@@ -8,7 +8,6 @@ import Programs from "./scenes/programs";
 import Course from "./scenes/course";
 import Form from "./scenes/form";
 import FAQ from "./scenes/faq";
-import Program from "./scenes/program";
 import Generated from "./scenes/generated";
 import Recommendation from "./scenes/recommendation";
 import Login from "./scenes/auth"; // Import the login component
@@ -116,7 +115,7 @@ function App() {
             className="content"
             style={{ width: isLoginPage ? "100%" : undefined }}
           >
-            {isLoginPage && <Topbar setIsSidebar={setIsSidebar} />}
+            <Topbar setIsSidebar={setIsSidebar} />
             <Routes>
               {/* Login route - redirect to dashboard if already authenticated */}
               <Route 

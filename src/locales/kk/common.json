@@ -10,5 +10,18 @@
     "popupClosed": "Кіру тоқтатылды. Қайталап көріңіз.",
     "authFailed": "Аутентификация қатесі",
     "backendError": "Пайдаланушыны тіркеу мүмкін болмады"
+  },
+  "navigation": {
+    "dashboard": "Бақылау тақтасы",
+    "programs": "Бағдарламалар",
+    "programDetails": "Бағдарлама туралы мәліметтер"
+  },
+
+  "generated": {
+    "loadingProgramData": "Бағдарлама деректері жүктелуде...",
+    "jobs": "Мамандықтар",
+    "standards": "Стандарттар",
+    "learningOutcomes": "Оқу нәтижелері",
+    "courses": "Курстар"
   }
 }
