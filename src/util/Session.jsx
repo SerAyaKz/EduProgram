@@ -42,7 +42,7 @@ const SessionManager = () => {
             console.error("Error signing out:", error);
           });
       }
-    }, 30000); // Check every 30 seconds
+    }, 3000); // Check every 30 seconds
     
     // Reset timer on user activity
     const resetTimer = () => {

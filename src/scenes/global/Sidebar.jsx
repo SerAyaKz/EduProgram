@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
 import { Link } from "react-router-dom";
@@ -10,8 +10,9 @@ import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
 import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
 import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
-import { getAuth } from "firebase/auth";
+// import { getAuth } from "firebase/auth";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
+import { useTranslation } from "react-i18next";
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
@@ -36,10 +37,9 @@ const Sidebar = () => {
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selected, setSelected] = useState("Dashboard");
-  
 
-  const dbUser = JSON.parse(localStorage.getItem('dbUser'));
-  
+  const dbUser = JSON.parse(localStorage.getItem("dbUser"));
+  const { t } = useTranslation();
 
   return (
     <Box
@@ -107,7 +107,7 @@ const Sidebar = () => {
                   fontWeight="bold"
                   sx={{ m: "10px 0 0 0" }}
                 >
-                  {dbUser?.displayName || "User"}
+                  {dbUser?.displayName || t("sidebar.user")}
                 </Typography>
                 <Typography variant="h5" color={colors.greenAccent[500]}>
                   {dbUser?.email || ""}
@@ -118,7 +118,7 @@ const Sidebar = () => {
 
           <Box paddingLeft={isCollapsed ? undefined : "10%"}>
             <Item
-              title="Dashboard"
+              title={t("sidebar.dashboard")}
               to="/"
               icon={<HomeOutlinedIcon />}
               selected={selected}
@@ -130,24 +130,24 @@ const Sidebar = () => {
               color={colors.grey[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              {isCollapsed ? "" : "Data"}
+              {isCollapsed ? "" : t("sidebar.data")}
             </Typography>
             <Item
-              title="Manage Team"
+              title={t("sidebar.manageTeam")}
               to="/team"
               icon={<PeopleOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
-              title="Course Information"
+              title={t("sidebar.courseInformation")}
               to="/courses"
               icon={<ContactsOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
             <Item
-              title="Programs"
+              title={t("sidebar.programs")}
               to="/program"
               icon={<ReceiptOutlinedIcon />}
               selected={selected}
@@ -159,18 +159,18 @@ const Sidebar = () => {
               color={colors.grey[300]}
               sx={{ m: "15px 0 5px 20px" }}
             >
-              {isCollapsed ? "" : "Pages"}
+              {isCollapsed ? "" : t("sidebar.pages")}
             </Typography>
             <Item
-              title="Profile Form"
+              title={t("sidebar.profileForm")}
               to="/form"
               icon={<PersonOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
-           
+
             <Item
-              title="FAQ Page"
+              title={t("sidebar.faq")}
               to="/faq"
               icon={<HelpOutlineOutlinedIcon />}
               selected={selected}

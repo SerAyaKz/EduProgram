@@ -35,16 +35,6 @@ const Generated = () => {
 //Language
   const { t,i18n  } = useTranslation();
 
-  const langMap = {
-  en: "En",
-  ru: "Ru",
-  kk: "Kz"
-};
-
-const getProgramField = (field) => {
-  const suffix = langMap[i18n.language] || "En"
-  return programData?.program?.[`${field}${suffix}`] ?? "";
-};
 // Fetching
 const fetchProgramData = async () => {
   try {
@@ -89,13 +79,21 @@ const sections = [
     id: "standard",
     title: t("generated.standards"),
     icon: <LibraryBooksIcon />,
-    component: <StandardDetails standards={programData?.standards ?? []} />,
+    component: <StandardDetails
+  standards={programData?.standards ?? []}
+  programId={program_id}
+  onRefresh={fetchProgramData}
+/>,
   },
   {
     id: "outcome",
     title: t("generated.learningOutcomes"),
     icon: <SchoolIcon />,
-    component: <OutcomeDetails outcomes={programData?.outcomes ?? []} />,
+    component: <OutcomeDetails
+      outcomes={programData?.outcomes ?? []}
+      programId={program_id}
+      onRefresh={fetchProgramData}
+    />,
   },
   {
     id: "courses",
@@ -167,7 +165,11 @@ const sections = [
         </Typography>
         {/* I would like to change based on language eduGoalKz eduGoalRu */}
         <Typography variant="body1" color="text.secondary">
-          {getProgramField("eduGoal")}
+          {i18n.language === 'ru'
+    ? programData?.program?.eduGoalRu
+    : i18n.language === 'kk'
+    ? programData?.program?.eduGoalKz
+    : programData?.program?.eduGoalEn}
         </Typography>
       </Paper>
 

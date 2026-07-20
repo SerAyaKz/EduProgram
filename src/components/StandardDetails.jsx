@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Paper, 
-  Typography, 
-  Button, 
-  TextField, 
+import {
+  Box,
+  Paper,
+  Typography,
+  Button,
+  TextField,
   IconButton,
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
   TableRow,
   Dialog,
   DialogActions,
@@ -21,6 +21,7 @@ import {
   CircularProgress,
   Alert,
   Collapse,
+  Chip,
   Grid,
   Divider,
   useTheme,
@@ -37,27 +38,28 @@ import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import SearchIcon from '@mui/icons-material/Search';
 import LinkIcon from '@mui/icons-material/Link';
 import LaunchIcon from '@mui/icons-material/Launch';
+import { useTranslation } from 'react-i18next';
 
 // Import professional standards data
 import profStandardsData from '../data/prof_standard.json';
 
-const StandardDetails = ({ programId }) => {
+const StandardDetails = ({ standards, programId, onRefresh }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const [standards, setStandards] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { t, i18n } = useTranslation();
+
   const [error, setError] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
-  const [currentStandard, setCurrentStandard] = useState({ 
-    id: null, 
-    nameKz: '', 
-    nameRu: '', 
-    nameEn: '', 
+  const [currentStandard, setCurrentStandard] = useState({
+    id: null,
+    nameKz: '',
+    nameRu: '',
+    nameEn: '',
     programId,
-    url: '' // Added URL field
+    url: ''
   });
 
   // For professional standards search
@@ -65,26 +67,18 @@ const StandardDetails = ({ programId }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
 
-  const fetchStandards = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`http://localhost:8081/programs/standard/${programId}`);
-      if (!response.ok) throw new Error("Failed to fetch standards");
-      const data = await response.json();
-      setStandards(data);
-      setError(null);
-    } catch (error) {
-      console.error(error.message);
-      setError(`Error loading standards: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Re-run search whenever the query or selected language changes,
+  // same pattern as the Atlas search in JobDetails.
   useEffect(() => {
-    fetchStandards();
-  }, [programId]);
+    if (searchQuery.trim()) {
+      handleSearch();
+    } else {
+      setSearchResults([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, selectedLanguage]);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -120,9 +114,9 @@ const StandardDetails = ({ programId }) => {
         await createStandard(currentStandard);
       }
       setFormOpen(false);
-      fetchStandards();
+      await onRefresh();
     } catch (error) {
-      setError(`Failed to save standard: ${error.message}`);
+      setError(t('standard.failedToSaveStandard', { error: error.message, defaultValue: `Failed to save standard: ${error.message}` }));
     }
   };
 
@@ -132,7 +126,7 @@ const StandardDetails = ({ programId }) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...standard, programId }),
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -144,7 +138,7 @@ const StandardDetails = ({ programId }) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...standard, programId }),
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -159,9 +153,9 @@ const StandardDetails = ({ programId }) => {
     try {
       const response = await fetch(`http://localhost:8081/standard/${deleteId}`, { method: 'DELETE' });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      fetchStandards();
+      await onRefresh();
     } catch (error) {
-      setError(`Failed to delete standard: ${error.message}`);
+      setError(t('standard.failedToDeleteStandard', { error: error.message, defaultValue: `Failed to delete standard: ${error.message}` }));
     } finally {
       setOpenDialog(false);
       setDeleteId(null);
@@ -173,9 +167,9 @@ const StandardDetails = ({ programId }) => {
     try {
       const response = await fetch(`http://localhost:8081/standard/generate/${programId}`, { method: 'POST' });
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      fetchStandards();
+      await onRefresh();
     } catch (error) {
-      setError(`Failed to generate standards: ${error.message}`);
+      setError(t('standard.failedToGenerateStandards', { error: error.message, defaultValue: `Failed to generate standards: ${error.message}` }));
     } finally {
       setGenerating(false);
     }
@@ -186,6 +180,7 @@ const StandardDetails = ({ programId }) => {
     setSearchDialogOpen(true);
     setSearchQuery('');
     setSearchResults([]);
+    setSelectedLanguage(i18n.language === 'ru' ? 'ru' : i18n.language === 'kk' ? 'kk' : 'en');
   };
 
   const handleSearchDialogClose = () => {
@@ -196,6 +191,14 @@ const StandardDetails = ({ programId }) => {
     setSearchQuery(e.target.value);
   };
 
+  // Map the UI's selected language to the corresponding field on the
+  // prof_standard.json records.
+  const languageFieldMap = {
+    en: 'name_en',
+    ru: 'name_ru',
+    kk: 'name_kk',
+  };
+
   const handleSearch = () => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -203,13 +206,14 @@ const StandardDetails = ({ programId }) => {
     }
 
     setSearchLoading(true);
-    
-    // Search logic for professional standards
+
     const query = searchQuery.toLowerCase();
-    const results = profStandardsData.filter(standard => 
-      standard.name_ru.toLowerCase().includes(query) || 
-      standard.name_en.toLowerCase().includes(query) || 
-      standard.name_kk.toLowerCase().includes(query) ||
+    const nameField = languageFieldMap[selectedLanguage] || 'name_en';
+
+    // Search only within the selected language's name field, plus the code,
+    // instead of matching across all three languages at once.
+    const results = profStandardsData.filter((standard) =>
+      (standard[nameField] || '').toLowerCase().includes(query) ||
       standard.code_ps.toLowerCase().includes(query)
     );
 
@@ -232,10 +236,19 @@ const StandardDetails = ({ programId }) => {
       programId,
       url: profStandard.url || ''
     });
-    
+
     setSearchDialogOpen(false);
     setFormOpen(true);
   };
+
+  // Resolve the display name for a standard based on the active app language,
+  // same fallback pattern used for jobs in JobDetails.
+  const getDisplayName = (standard) =>
+    i18n.language === 'ru'
+      ? standard.nameRu
+      : i18n.language === 'kk'
+        ? standard.nameKz
+        : standard.nameEn;
 
   return (
     <Box sx={{ p: 3 }}>
@@ -243,21 +256,23 @@ const StandardDetails = ({ programId }) => {
         <Grid item xs={12} md={6}>
           <Typography variant="h5" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <LibraryBooksIcon sx={{ mr: 1 }} />
-            Standards Management
+            {t('standard.standardsManagement', { defaultValue: 'Standards Management' })}
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
-            Define and manage educational standards for this program. Standards can be created manually, imported from professional standards, or generated automatically.
+            {t('standard.standardsManagementDescription', {
+              defaultValue: 'Define and manage educational standards for this program. Standards can be created manually, imported from professional standards, or generated automatically.'
+            })}
           </Typography>
         </Grid>
         <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button 
-              variant="contained" 
-              startIcon={<AddIcon />} 
-              onClick={() => handleFormOpen()} 
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => handleFormOpen()}
               sx={{ bgcolor: colors.greenAccent[600] }}
             >
-              Add Standard
+              {t('standard.addStandard', { defaultValue: 'Add Standard' })}
             </Button>
             <Button
               variant="contained"
@@ -265,16 +280,16 @@ const StandardDetails = ({ programId }) => {
               onClick={handleSearchDialogOpen}
               sx={{ bgcolor: colors.blueAccent[400] }}
             >
-              Search Prof Standards
+              {t('standard.searchProfStandards', { defaultValue: 'Search Prof Standards' })}
             </Button>
-            <Button 
-              variant="contained" 
-              startIcon={<AutoFixHighIcon />} 
+            <Button
+              variant="contained"
+              startIcon={<AutoFixHighIcon />}
               onClick={generateStandards}
               disabled={generating}
               sx={{ bgcolor: colors.blueAccent[500] }}
             >
-              {generating ? <CircularProgress size={24} color="inherit" /> : "Generate Standards"}
+              {generating ? <CircularProgress size={24} color="inherit" /> : t('standard.generateStandards', { defaultValue: 'Generate Standards' })}
             </Button>
           </Box>
         </Grid>
@@ -284,8 +299,8 @@ const StandardDetails = ({ programId }) => {
 
       {/* Error message */}
       <Collapse in={!!error}>
-        <Alert 
-          severity="error" 
+        <Alert
+          severity="error"
           action={
             <IconButton size="small" color="inherit" onClick={() => setError(null)}>
               <CloseIcon fontSize="small" />
@@ -302,43 +317,42 @@ const StandardDetails = ({ programId }) => {
         <Table sx={{ minWidth: 650 }}>
           <TableHead>
             <TableRow sx={{ bgcolor: colors.blueAccent[700] }}>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name (Kazakh)</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name (Russian)</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name (English)</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Source Link</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="right">Actions</TableCell>
+              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>
+                {t('standard.name', { defaultValue: 'Name' })}
+              </TableCell>
+              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>
+                {t('standard.sourceLink', { defaultValue: 'Source Link' })}
+              </TableCell>
+              <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="right">
+                {t('standard.actions', { defaultValue: 'Actions' })}
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {loading ? (
+            {standards.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
-                  <CircularProgress size={30} />
-                  <Typography sx={{ mt: 1 }}>Loading standards...</Typography>
-                </TableCell>
-              </TableRow>
-            ) : standards.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
-                  <Typography>No standards available. Add a standard, import from professional standards, or generate standards.</Typography>
+                <TableCell colSpan={3} align="center" sx={{ py: 3 }}>
+                  <Typography>
+                    {t('standard.noStandardsAvailable', {
+                      defaultValue: 'No standards available. Add a standard, import from professional standards, or generate standards.'
+                    })}
+                  </Typography>
                 </TableCell>
               </TableRow>
             ) : (
               standards.map((standard) => (
                 <TableRow key={standard.id} hover>
-                  <TableCell>{standard.nameKz}</TableCell>
-                  <TableCell>{standard.nameRu}</TableCell>
-                  <TableCell>{standard.nameEn}</TableCell>
+                  <TableCell sx={{ fontWeight: 'medium' }}>{getDisplayName(standard)}</TableCell>
                   <TableCell>
                     {standard.url ? (
-                      <Link 
-                        href={standard.url} 
-                        target="_blank" 
+                      <Link
+                        href={standard.url}
+                        target="_blank"
                         rel="noopener noreferrer"
                         sx={{ display: 'flex', alignItems: 'center' }}
                       >
                         <LinkIcon fontSize="small" sx={{ mr: 0.5 }} />
-                        View Source
+                        {t('standard.viewSource', { defaultValue: 'View Source' })}
                         <LaunchIcon fontSize="small" sx={{ ml: 0.5 }} />
                       </Link>
                     ) : (
@@ -346,12 +360,12 @@ const StandardDetails = ({ programId }) => {
                     )}
                   </TableCell>
                   <TableCell align="right">
-                    <Tooltip title="Edit">
+                    <Tooltip title={t('standard.edit', { defaultValue: 'Edit' })}>
                       <IconButton onClick={() => handleFormOpen(standard)} size="small" sx={{ mr: 1 }}>
                         <EditIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Delete">
+                    <Tooltip title={t('standard.delete', { defaultValue: 'Delete' })}>
                       <IconButton onClick={() => handleDeleteClick(standard.id)} size="small" color="error">
                         <DeleteIcon fontSize="small" />
                       </IconButton>
@@ -367,7 +381,9 @@ const StandardDetails = ({ programId }) => {
       {/* Standard form dialog */}
       <Dialog open={formOpen} onClose={handleFormClose} maxWidth="md" fullWidth>
         <DialogTitle>
-          {currentStandard.id ? 'Edit Standard' : 'Add New Standard'}
+          {currentStandard.id
+            ? t('standard.editStandard', { defaultValue: 'Edit Standard' })
+            : t('standard.addNewStandard', { defaultValue: 'Add New Standard' })}
           <IconButton
             aria-label="close"
             onClick={handleFormClose}
@@ -382,7 +398,7 @@ const StandardDetails = ({ programId }) => {
               <Grid item xs={12}>
                 <TextField
                   autoFocus
-                  label="Standard Name (Kazakh)"
+                  label={t('standard.nameKz', { defaultValue: 'Standard Name (Kazakh)' })}
                   name="nameKz"
                   fullWidth
                   value={currentStandard.nameKz}
@@ -393,7 +409,7 @@ const StandardDetails = ({ programId }) => {
               </Grid>
               <Grid item xs={12}>
                 <TextField
-                  label="Standard Name (Russian)"
+                  label={t('standard.nameRu', { defaultValue: 'Standard Name (Russian)' })}
                   name="nameRu"
                   fullWidth
                   value={currentStandard.nameRu}
@@ -404,7 +420,7 @@ const StandardDetails = ({ programId }) => {
               </Grid>
               <Grid item xs={12}>
                 <TextField
-                  label="Standard Name (English)"
+                  label={t('standard.nameEn', { defaultValue: 'Standard Name (English)' })}
                   name="nameEn"
                   fullWidth
                   value={currentStandard.nameEn}
@@ -415,7 +431,7 @@ const StandardDetails = ({ programId }) => {
               </Grid>
               <Grid item xs={12}>
                 <TextField
-                  label="Source URL (Optional)"
+                  label={t('standard.sourceUrl', { defaultValue: 'Source URL (Optional)' })}
                   name="url"
                   fullWidth
                   value={currentStandard.url}
@@ -434,9 +450,13 @@ const StandardDetails = ({ programId }) => {
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>
-            <Button onClick={handleFormClose} color="inherit">Cancel</Button>
+            <Button onClick={handleFormClose} color="inherit">
+              {t('standard.cancel', { defaultValue: 'Cancel' })}
+            </Button>
             <Button type="submit" variant="contained" color="primary">
-              {currentStandard.id ? 'Update' : 'Create'}
+              {currentStandard.id
+                ? t('standard.update', { defaultValue: 'Update' })
+                : t('standard.create', { defaultValue: 'Create' })}
             </Button>
           </DialogActions>
         </form>
@@ -444,29 +464,33 @@ const StandardDetails = ({ programId }) => {
 
       {/* Delete confirmation dialog */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogTitle>{t('standard.confirmDeletion', { defaultValue: 'Confirm Deletion' })}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete this standard? This action cannot be undone.
+            {t('standard.deleteStandardConfirmation', {
+              defaultValue: 'Are you sure you want to delete this standard? This action cannot be undone.'
+            })}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} color="inherit">Cancel</Button>
+          <Button onClick={() => setOpenDialog(false)} color="inherit">
+            {t('standard.cancel', { defaultValue: 'Cancel' })}
+          </Button>
           <Button onClick={handleDeleteConfirm} color="error" variant="contained">
-            Delete
+            {t('standard.delete', { defaultValue: 'Delete' })}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Professional Standards Search Dialog */}
-      <Dialog 
-        open={searchDialogOpen} 
+      <Dialog
+        open={searchDialogOpen}
         onClose={handleSearchDialogClose}
-        maxWidth="md" 
+        maxWidth="md"
         fullWidth
       >
         <DialogTitle>
-          Search Professional Standards
+          {t('standard.searchProfessionalStandards', { defaultValue: 'Search Professional Standards' })}
           <IconButton
             aria-label="close"
             onClick={handleSearchDialogClose}
@@ -476,11 +500,11 @@ const StandardDetails = ({ programId }) => {
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 2 }}>
             <TextField
               autoFocus
               fullWidth
-              label="Search by name or code"
+              label={t('standard.searchByNameOrCode', { defaultValue: 'Search by name or code' })}
               variant="outlined"
               value={searchQuery}
               onChange={handleSearchChange}
@@ -496,8 +520,35 @@ const StandardDetails = ({ programId }) => {
               }}
             />
             <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-              Search by standard name (in any language) or code
+              {t('standard.searchByNameHelperText', {
+                defaultValue: 'Search by standard name in the selected language, or by code'
+              })}
             </Typography>
+          </Box>
+
+          {/* Language selector, same pattern as the Atlas search chips in JobDetails */}
+          <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+            <Chip
+              label={t('standard.english', { defaultValue: 'English' })}
+              variant={selectedLanguage === 'en' ? 'filled' : 'outlined'}
+              color={selectedLanguage === 'en' ? 'primary' : 'default'}
+              onClick={() => setSelectedLanguage('en')}
+              clickable
+            />
+            <Chip
+              label={t('standard.russian', { defaultValue: 'Russian' })}
+              variant={selectedLanguage === 'ru' ? 'filled' : 'outlined'}
+              color={selectedLanguage === 'ru' ? 'primary' : 'default'}
+              onClick={() => setSelectedLanguage('ru')}
+              clickable
+            />
+            <Chip
+              label={t('standard.kazakh', { defaultValue: 'Kazakh' })}
+              variant={selectedLanguage === 'kk' ? 'filled' : 'outlined'}
+              color={selectedLanguage === 'kk' ? 'primary' : 'default'}
+              onClick={() => setSelectedLanguage('kk')}
+              clickable
+            />
           </Box>
 
           {searchLoading ? (
@@ -509,27 +560,23 @@ const StandardDetails = ({ programId }) => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Code</TableCell>
-                    <TableCell>Name (RU)</TableCell>
-                    <TableCell>Name (KZ)</TableCell>
-                    <TableCell>Name (EN)</TableCell>
-                    <TableCell align="right">Action</TableCell>
+                    <TableCell>{t('standard.code', { defaultValue: 'Code' })}</TableCell>
+                    <TableCell>{t('standard.name', { defaultValue: 'Name' })}</TableCell>
+                    <TableCell align="right">{t('standard.action', { defaultValue: 'Action' })}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {searchResults.map((result) => (
                     <TableRow key={result.id} hover>
                       <TableCell>{result.code_ps}</TableCell>
-                      <TableCell>{result.name_ru}</TableCell>
-                      <TableCell>{result.name_kk}</TableCell>
-                      <TableCell>{result.name_en}</TableCell>
+                      <TableCell>{result[languageFieldMap[selectedLanguage] || 'name_en']}</TableCell>
                       <TableCell align="right">
                         <Button
                           size="small"
                           variant="contained"
                           onClick={() => handleSelectProfStandard(result)}
                         >
-                          Select
+                          {t('standard.select', { defaultValue: 'Select' })}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -539,16 +586,22 @@ const StandardDetails = ({ programId }) => {
             </TableContainer>
           ) : searchQuery ? (
             <Box sx={{ textAlign: 'center', py: 3 }}>
-              <Typography>No standards found for "{searchQuery}"</Typography>
+              <Typography>
+                {t('standard.noMatchingStandards', { defaultValue: `No standards found for "${searchQuery}"` })}
+              </Typography>
             </Box>
           ) : (
             <Box sx={{ textAlign: 'center', py: 3 }}>
-              <Typography>Enter a search term to find professional standards</Typography>
+              <Typography>
+                {t('standard.typeToSearchProfStandards', { defaultValue: 'Enter a search term to find professional standards' })}
+              </Typography>
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleSearchDialogClose} color="inherit">Cancel</Button>
+          <Button onClick={handleSearchDialogClose} color="inherit">
+            {t('standard.cancel', { defaultValue: 'Cancel' })}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

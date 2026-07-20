@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react'; 
-import { 
-  Box, 
-  Paper, 
-  Typography, 
-  Button, 
-  TextField, 
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Paper,
+  Typography,
+  Button,
+  TextField,
   IconButton,
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
   TableRow,
   Dialog,
   DialogActions,
@@ -28,26 +28,22 @@ import {
   List,
   ListItem,
   ListItemText,
-  InputAdornment
-} from '@mui/material';
+  InputAdornment,
+} from "@mui/material";
 import { tokens } from "../theme";
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import CloseIcon from '@mui/icons-material/Close';
-import WorkIcon from '@mui/icons-material/Work';
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import BuildIcon from '@mui/icons-material/Build';
-import SearchIcon from '@mui/icons-material/Search';
-import TruncatedText from './TruncatedText';
-import atlasProfessions from '../data/atlas_professions.json';
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import CloseIcon from "@mui/icons-material/Close";
+import WorkIcon from "@mui/icons-material/Work";
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
+import BuildIcon from "@mui/icons-material/Build";
+import SearchIcon from "@mui/icons-material/Search";
+import TruncatedText from "./TruncatedText";
+import atlasProfessions from "../data/atlas_professions.json";
 import { useTranslation } from "react-i18next";
 
-const JobDetails = ({
-    jobs,
-    programId,
-    onRefresh
-}) => {
+const JobDetails = ({ jobs, programId, onRefresh }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -58,30 +54,33 @@ const JobDetails = ({
   const [formOpen, setFormOpen] = useState(false);
   const [currentJob, setCurrentJob] = useState({
     id: null,
-    nameEn: '',
-    descriptionEn: '',
-    nameRu: '',
-    descriptionRu: '',
-    nameKz: '',
-    descriptionKz: '',
-    job_type: '',
-    programId: Number(programId)
-});
+    nameEn: "",
+    descriptionEn: "",
+    nameRu: "",
+    descriptionRu: "",
+    nameKz: "",
+    descriptionKz: "",
+    job_type: "",
+    programId: Number(programId),
+  });
 
   // Atlas search states
   const [atlasSearchOpen, setAtlasSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [selectedLanguage, setSelectedLanguage] = useState("en");
   const [creatingJob, setCreatingJob] = useState(false);
 
-  const { t,i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Search through Atlas professions
   useEffect(() => {
     if (searchQuery.trim()) {
-      const filteredResults = atlasProfessions.filter(profession => {
-        const title = profession.title[selectedLanguage] || profession.title.en || profession.title.ru;
+      const filteredResults = atlasProfessions.filter((profession) => {
+        const title =
+          profession.title[selectedLanguage] ||
+          profession.title.en ||
+          profession.title.ru;
         return title.toLowerCase().includes(searchQuery.toLowerCase());
       });
       setSearchResults(filteredResults);
@@ -98,27 +97,27 @@ const JobDetails = ({
   const handleFormOpen = (job = null) => {
     if (job) {
       setCurrentJob({
-    id: job.id,
-    nameEn: job.nameEn || '',
-    descriptionEn: job.descriptionEn || '',
-    nameRu: job.nameRu || '',
-    descriptionRu: job.descriptionRu || '',
-    nameKz: job.nameKz || '',
-    descriptionKz: job.descriptionKz || '',
-    job_type: job.job_type || '',
-    programId: Number(programId)
-});
+        id: job.id,
+        nameEn: job.nameEn || "",
+        descriptionEn: job.descriptionEn || "",
+        nameRu: job.nameRu || "",
+        descriptionRu: job.descriptionRu || "",
+        nameKz: job.nameKz || "",
+        descriptionKz: job.descriptionKz || "",
+        job_type: job.job_type || "",
+        programId: Number(programId),
+      });
     } else {
-      setCurrentJob({ 
+      setCurrentJob({
         id: null,
-    nameEn: '',
-    descriptionEn: '',
-    nameRu: '',
-    descriptionRu: '',
-    nameKz: '',
-    descriptionKz: '',
-    job_type: '',
-    programId: Number(programId)
+        nameEn: "",
+        descriptionEn: "",
+        nameRu: "",
+        descriptionRu: "",
+        nameKz: "",
+        descriptionKz: "",
+        job_type: "",
+        programId: Number(programId),
       });
     }
     setFormOpen(true);
@@ -139,30 +138,30 @@ const JobDetails = ({
       setFormOpen(false);
       await onRefresh();
     } catch (error) {
-      setError(`Failed to save job: ${error.message}`);
+      setError(t("job.failedToSaveJob", { error: error.message }));
     }
   };
 
   const createJob = async (job) => {
     const response = await fetch(`http://localhost:8081/job`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(job),
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
   };
 
   const updateJob = async (job) => {
-    console.log(job)
+    console.log(job);
     const response = await fetch(`http://localhost:8081/job/${job.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(job),
     });
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -175,11 +174,14 @@ const JobDetails = ({
 
   const handleDeleteConfirm = async () => {
     try {
-      const response = await fetch(`http://localhost:8081/job/${deleteId}`, { method: 'DELETE' });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await fetch(`http://localhost:8081/job/${deleteId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
       await onRefresh();
     } catch (error) {
-      setError(`Failed to delete job: ${error.message}`);
+      setError(t("job.failedToDeleteJob", { error: error.message }));
     } finally {
       setOpenDialog(false);
       setDeleteId(null);
@@ -189,11 +191,15 @@ const JobDetails = ({
   const generateJobs = async () => {
     setGenerating(true);
     try {
-      const response = await fetch(`http://localhost:8081/job/generate/${programId}`, { method: 'POST' });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await fetch(
+        `http://localhost:8081/job/generate/${programId}`,
+        { method: "POST" },
+      );
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
       await onRefresh();
     } catch (error) {
-      setError(`Failed to generate jobs: ${error.message}`);
+      setError(t("job.failedToGenerateJobs", { error: error.message }));
     } finally {
       setGenerating(false);
     }
@@ -202,11 +208,15 @@ const JobDetails = ({
   const generateSkills = async () => {
     setGenerating(true);
     try {
-      const response = await fetch(`http://localhost:8081/job/skills/generate/${programId}`, { method: 'POST' });
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await fetch(
+        `http://localhost:8081/job/skills/generate/${programId}`,
+        { method: "POST" },
+      );
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
       await onRefresh();
     } catch (error) {
-      setError(`Failed to generate skills: ${error.message}`);
+      setError(t("job.failedToGenerateSkills", { error: error.message }));
     } finally {
       setGenerating(false);
     }
@@ -214,7 +224,7 @@ const JobDetails = ({
 
   const handleOpenAtlasSearch = () => {
     setAtlasSearchOpen(true);
-    setSearchQuery('');
+    setSearchQuery("");
     setSearchResults([]);
   };
 
@@ -223,30 +233,36 @@ const JobDetails = ({
   };
 
   const handleSelectProfession = async (profession) => {
-    const title = profession.title[selectedLanguage] || profession.title.en || profession.title.ru;
-    const description = profession.description[selectedLanguage] || profession.description.en || profession.description.ru;
-    
+    // const title =
+    //   profession.title[selectedLanguage] ||
+    //   profession.title.en ||
+    //   profession.title.ru;
+    // const description =
+    //   profession.description[selectedLanguage] ||
+    //   profession.description.en ||
+    //   profession.description.ru;
+
     const newJob = {
-    nameEn: profession.title.en || '',
-    descriptionEn: profession.description.en || '',
+      nameEn: profession.title.en || "",
+      descriptionEn: profession.description.en || "",
 
-    nameRu: profession.title.ru || '',
-    descriptionRu: profession.description.ru || '',
+      nameRu: profession.title.ru || "",
+      descriptionRu: profession.description.ru || "",
 
-    nameKz: profession.title.kk || '',
-    descriptionKz: profession.description.kk || '',
+      nameKz: profession.title.kk || "",
+      descriptionKz: profession.description.kk || "",
 
-    job_type: 'atlas',
-    programId: Number(programId)
-};
-    
+      job_type: "Atlas",
+      programId: Number(programId),
+    };
+
     setCreatingJob(true);
     try {
       await createJob(newJob);
       await onRefresh();
       setAtlasSearchOpen(false);
     } catch (error) {
-      setError(`Failed to add job from Atlas: ${error.message}`);
+      setError(t("job.failedToAddJobFromAtlas", { error: error.message }));
     } finally {
       setCreatingJob(false);
     }
@@ -256,49 +272,69 @@ const JobDetails = ({
     <Box sx={{ p: 3 }}>
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
-          <Typography variant="h5" sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Typography
+            variant="h5"
+            sx={{ display: "flex", alignItems: "center", mb: 2 }}
+          >
             <WorkIcon sx={{ mr: 1 }} />
-            Job Management
+            {t("job.jobManagement")}
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
-            Define and manage job roles relevant to this program. Jobs can be created manually or imported from Atlas.
+            {t("job.jobManagementDescription")}
           </Typography>
         </Grid>
-        <Grid item xs={12} md={6} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button 
-              variant="contained" 
-              startIcon={<AddIcon />} 
-              onClick={() => handleFormOpen()} 
+        <Grid
+          item
+          xs={12}
+          md={6}
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "center",
+          }}
+        >
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => handleFormOpen()}
               sx={{ bgcolor: colors.greenAccent[600] }}
             >
-              Add Job
+              {t("job.addJob")}
             </Button>
-            <Button 
-              variant="contained" 
-              startIcon={<SearchIcon />} 
+            <Button
+              variant="contained"
+              startIcon={<SearchIcon />}
               onClick={handleOpenAtlasSearch}
               sx={{ bgcolor: colors.blueAccent[600] }}
             >
-              Search Atlas
+              {t("job.searchAtlas")}
             </Button>
-            <Button 
-              variant="contained" 
-              startIcon={<AutoFixHighIcon />} 
+            <Button
+              variant="contained"
+              startIcon={<AutoFixHighIcon />}
               onClick={generateJobs}
               disabled={generating}
               sx={{ bgcolor: colors.blueAccent[500] }}
             >
-              {generating ? <CircularProgress size={24} color="inherit" /> : "Generate Jobs"}
+              {generating ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                t("job.generateJobs")
+              )}
             </Button>
-            <Button 
-              variant="contained" 
-              startIcon={<BuildIcon />} 
+            <Button
+              variant="contained"
+              startIcon={<BuildIcon />}
               onClick={generateSkills}
               disabled={generating}
               sx={{ bgcolor: colors.blueAccent[700] }}
             >
-              {generating ? <CircularProgress size={24} color="inherit" /> : "Generate Skills"}
+              {generating ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                t("job.generateSkills")
+              )}
             </Button>
           </Box>
         </Grid>
@@ -308,10 +344,14 @@ const JobDetails = ({
 
       {/* Error message */}
       <Collapse in={!!error}>
-        <Alert 
-          severity="error" 
+        <Alert
+          severity="error"
           action={
-            <IconButton size="small" color="inherit" onClick={() => setError(null)}>
+            <IconButton
+              size="small"
+              color="inherit"
+              onClick={() => setError(null)}
+            >
               <CloseIcon fontSize="small" />
             </IconButton>
           }
@@ -326,52 +366,82 @@ const JobDetails = ({
         <Table sx={{ minWidth: 650 }}>
           <TableHead>
             <TableRow sx={{ bgcolor: colors.blueAccent[700] }}>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Job Title</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Description</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Job Type</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="right">Actions</TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                {t("job.jobTitle")}
+              </TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                {t("job.description")}
+              </TableCell>
+              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                {t("job.jobType")}
+              </TableCell>
+              <TableCell
+                sx={{ color: "white", fontWeight: "bold" }}
+                align="right"
+              >
+                {t("job.actions")}
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {jobs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                  <Typography>No jobs available. Add a job, search Atlas, or generate jobs.</Typography>
+                  <Typography>{t("job.noJobsAvailable")}</Typography>
                 </TableCell>
               </TableRow>
             ) : (
               jobs.map((job) => (
                 <TableRow key={job.id} hover>
-                  <TableCell sx={{ fontWeight: 'medium' }}>{i18n.language === 'ru'
-    ? job.nameRu
-    : i18n.language === 'kk'
-    ? job.nameKz
-    : job.nameEn}</TableCell>
-                  <TableCell>
-                    <TruncatedText  text={
-        i18n.language === 'ru'
-            ? job.descriptionRu
-            : i18n.language === 'kk'
-            ? job.descriptionKz
-            : job.descriptionEn
-    } maxLength={100} />
+                  <TableCell sx={{ fontWeight: "medium" }}>
+                    {i18n.language === "ru"
+                      ? job.nameRu
+                      : i18n.language === "kk"
+                        ? job.nameKz
+                        : job.nameEn}
                   </TableCell>
                   <TableCell>
-                    <Chip 
-                      label={job.job_type || "Added by user"} 
+                    <TruncatedText
+                      text={
+                        i18n.language === "ru"
+                          ? job.descriptionRu
+                          : i18n.language === "kk"
+                            ? job.descriptionKz
+                            : job.descriptionEn
+                      }
+                      maxLength={100}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={
+                        job.job_type === "Atlas"
+                          ? t("jobType.atlas")
+                          : job.job_type === "Changed Atlas by User"
+                            ? t("jobType.changedAtlasByUser")
+                            : t("jobType.addedByUser")
+                      }
                       size="small"
-                      color={job.job_type === "atlas" ? "success" : job.job_type ? "default" : "default"}
+                      color={job.job_type === "Atlas" ? "success" : "default"}
                       variant="outlined"
                     />
                   </TableCell>
                   <TableCell align="right">
-                    <Tooltip title="Edit">
-                      <IconButton onClick={() => handleFormOpen(job)} size="small" sx={{ mr: 1 }}>
+                    <Tooltip title={t("job.edit")}>
+                      <IconButton
+                        onClick={() => handleFormOpen(job)}
+                        size="small"
+                        sx={{ mr: 1 }}
+                      >
                         <EditIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton onClick={() => handleDeleteClick(job.id)} size="small" color="error">
+                    <Tooltip title={t("job.delete")}>
+                      <IconButton
+                        onClick={() => handleDeleteClick(job.id)}
+                        size="small"
+                        color="error"
+                      >
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
@@ -386,11 +456,11 @@ const JobDetails = ({
       {/* Job form dialog */}
       <Dialog open={formOpen} onClose={handleFormClose} maxWidth="md" fullWidth>
         <DialogTitle>
-          {currentJob.id ? 'Edit Job' : 'Add New Job'}
+          {currentJob.id ? t("job.editJob") : t("job.addNewJob")}
           <IconButton
             aria-label="close"
             onClick={handleFormClose}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
+            sx={{ position: "absolute", right: 8, top: 8 }}
           >
             <CloseIcon />
           </IconButton>
@@ -401,7 +471,7 @@ const JobDetails = ({
               <Grid item xs={12}>
                 <TextField
                   autoFocus
-                  label="Job Title"
+                  label={t("job.jobTitleEn")}
                   name="nameEn"
                   fullWidth
                   value={currentJob.nameEn}
@@ -412,7 +482,7 @@ const JobDetails = ({
               </Grid>
               <Grid item xs={12}>
                 <TextField
-                  label="Description"
+                  label={t("job.descriptionEn")}
                   name="descriptionEn"
                   fullWidth
                   multiline
@@ -425,7 +495,7 @@ const JobDetails = ({
               <Grid item xs={12}>
                 <TextField
                   autoFocus
-                  label="Job Title"
+                  label={t("job.jobTitleRu")}
                   name="nameRu"
                   fullWidth
                   value={currentJob.nameRu}
@@ -436,7 +506,7 @@ const JobDetails = ({
               </Grid>
               <Grid item xs={12}>
                 <TextField
-                  label="Description"
+                  label={t("job.descriptionRu")}
                   name="descriptionRu"
                   fullWidth
                   multiline
@@ -449,7 +519,7 @@ const JobDetails = ({
               <Grid item xs={12}>
                 <TextField
                   autoFocus
-                  label="Job Title"
+                  label={t("job.jobTitleKz")}
                   name="nameKz"
                   fullWidth
                   value={currentJob.nameKz}
@@ -460,7 +530,7 @@ const JobDetails = ({
               </Grid>
               <Grid item xs={12}>
                 <TextField
-                  label="Description"
+                  label={t("job.descriptionKz")}
                   name="descriptionKz"
                   fullWidth
                   multiline
@@ -496,9 +566,11 @@ const JobDetails = ({
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: 2 }}>
-            <Button onClick={handleFormClose} color="inherit">Cancel</Button>
+            <Button onClick={handleFormClose} color="inherit">
+              {t("job.cancel")}
+            </Button>
             <Button type="submit" variant="contained" color="primary">
-              {currentJob.id ? 'Update' : 'Create'}
+              {currentJob.id ? t("job.update") : t("job.create")}
             </Button>
           </DialogActions>
         </form>
@@ -506,28 +578,39 @@ const JobDetails = ({
 
       {/* Delete confirmation dialog */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogTitle>{t("job.confirmDeletion")}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete this job? This action cannot be undone.
+            {t("job.deleteJobConfirmation")}{" "}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} color="inherit">Cancel</Button>
-          <Button onClick={handleDeleteConfirm} color="error" variant="contained">
-            Delete
+          <Button onClick={() => setOpenDialog(false)} color="inherit">
+            {t("job.cancel")}
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+          >
+            {t("job.delete")}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Atlas Search Dialog */}
-      <Dialog open={atlasSearchOpen} onClose={handleCloseAtlasSearch} maxWidth="md" fullWidth>
+      <Dialog
+        open={atlasSearchOpen}
+        onClose={handleCloseAtlasSearch}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>
-          Search Atlas Professions
+          {t("job.searchAtlasProfessions")}
           <IconButton
             aria-label="close"
             onClick={handleCloseAtlasSearch}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
+            sx={{ position: "absolute", right: 8, top: 8 }}
           >
             <CloseIcon />
           </IconButton>
@@ -538,7 +621,7 @@ const JobDetails = ({
               <TextField
                 autoFocus
                 fullWidth
-                label="Search for job titles"
+                label={t("job.searchForJobTitles")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 InputProps={{
@@ -549,31 +632,31 @@ const JobDetails = ({
                   ),
                 }}
                 variant="outlined"
-                placeholder="Type to search..."
+                placeholder={t("job.typeToSearch")}
                 sx={{ mb: 2 }}
               />
             </Grid>
             <Grid item xs={12}>
-              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                <Chip 
-                  label="English" 
-                  variant={selectedLanguage === 'en' ? 'filled' : 'outlined'}
-                  color={selectedLanguage === 'en' ? 'primary' : 'default'}
-                  onClick={() => setSelectedLanguage('en')}
+              <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+                <Chip
+                  label={t("job.english")}
+                  variant={selectedLanguage === "en" ? "filled" : "outlined"}
+                  color={selectedLanguage === "en" ? "primary" : "default"}
+                  onClick={() => setSelectedLanguage("en")}
                   clickable
                 />
-                <Chip 
-                  label="Russian" 
-                  variant={selectedLanguage === 'ru' ? 'filled' : 'outlined'}
-                  color={selectedLanguage === 'ru' ? 'primary' : 'default'}
-                  onClick={() => setSelectedLanguage('ru')}
+                <Chip
+                  label={t("job.russian")}
+                  variant={selectedLanguage === "ru" ? "filled" : "outlined"}
+                  color={selectedLanguage === "ru" ? "primary" : "default"}
+                  onClick={() => setSelectedLanguage("ru")}
                   clickable
                 />
-                <Chip 
-                  label="Kazakh" 
-                  variant={selectedLanguage === 'kk' ? 'filled' : 'outlined'}
-                  color={selectedLanguage === 'kk' ? 'primary' : 'default'}
-                  onClick={() => setSelectedLanguage('kk')}
+                <Chip
+                  label={t("job.kazakh")}
+                  variant={selectedLanguage === "kk" ? "filled" : "outlined"}
+                  color={selectedLanguage === "kk" ? "primary" : "default"}
+                  onClick={() => setSelectedLanguage("kk")}
                   clickable
                 />
               </Box>
@@ -583,18 +666,24 @@ const JobDetails = ({
           {searchResults.length > 0 ? (
             <List>
               {searchResults.map((profession) => {
-                const title = profession.title[selectedLanguage] || profession.title.en || profession.title.ru;
-                const industry = profession.industry[selectedLanguage] || profession.industry.en || profession.industry.ru;
-                
+                const title =
+                  profession.title[selectedLanguage] ||
+                  profession.title.en ||
+                  profession.title.ru;
+                const industry =
+                  profession.industry[selectedLanguage] ||
+                  profession.industry.en ||
+                  profession.industry.ru;
+
                 return (
-                  <ListItem 
-                    key={profession.id} 
-                    button 
+                  <ListItem
+                    key={profession.id}
+                    button
                     onClick={() => handleSelectProfession(profession)}
                     disabled={creatingJob}
                     divider
                     sx={{
-                      '&:hover': {
+                      "&:hover": {
                         bgcolor: colors.blueAccent[50],
                       },
                     }}
@@ -606,30 +695,44 @@ const JobDetails = ({
                         </Typography>
                       }
                       secondary={
-                        <Typography component="span" variant="body2" color="text.secondary">
+                        <Typography
+                          component="span"
+                          variant="body2"
+                          color="text.secondary"
+                        >
                           {industry}
                         </Typography>
                       }
                     />
                     {creatingJob && (
-                      <CircularProgress size={20} color="inherit" sx={{ ml: 2 }} />
+                      <CircularProgress
+                        size={20}
+                        color="inherit"
+                        sx={{ ml: 2 }}
+                      />
                     )}
                   </ListItem>
                 );
               })}
             </List>
           ) : searchQuery.trim() ? (
-            <Box sx={{ textAlign: 'center', py: 3 }}>
-              <Typography color="text.secondary">No matching jobs found. Try a different search term.</Typography>
+            <Box sx={{ textAlign: "center", py: 3 }}>
+              <Typography color="text.secondary">
+                {t("job.noMatchingJobs")}
+              </Typography>
             </Box>
           ) : (
-            <Box sx={{ textAlign: 'center', py: 3 }}>
-              <Typography color="text.secondary">Type to search for jobs in Atlas.</Typography>
+            <Box sx={{ textAlign: "center", py: 3 }}>
+              <Typography color="text.secondary">
+                {t("job.typeToSearchAtlas")}
+              </Typography>
             </Box>
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={handleCloseAtlasSearch} color="inherit">Cancel</Button>
+          <Button onClick={handleCloseAtlasSearch} color="inherit">
+            {t("job.cancel")}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
