@@ -9,8 +9,6 @@ import {
   TableRow, 
   Button, 
   TextField, 
-  FormControl, 
-  InputLabel,
   Grid,
   Paper,
   Typography,
@@ -23,9 +21,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
 import AddIcon from '@mui/icons-material/Add';
 import TruncatedText from './TruncatedText';
+import { useTranslation } from 'react-i18next';
 
-const CourseDetails = ({ programId }) => {
-  const [programCourses, setProgramCourses] = useState([]);
+const CourseDetails = ({ courses, programId, onRefresh }) => {
+  const { t, i18n } = useTranslation();
   const [availableCourses, setAvailableCourses] = useState([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [currentCourseProgram, setCurrentCourseProgram] = useState({
@@ -40,17 +39,6 @@ const CourseDetails = ({ programId }) => {
 
   const dbUser = JSON.parse(localStorage.getItem('dbUser'));
 
-  const fetchProgramCourses = async () => {
-    try {
-      const response = await fetch(`http://localhost:8081/programs/courseProgram/${programId}`);
-      if (!response.ok) throw new Error("Failed to fetch program courses");
-      const data = await response.json();
-      setProgramCourses(data);
-    } catch (error) {
-      console.error(error.message);
-    }
-  };
-
   const fetchAvailableCourses = async () => {
     try {
       const response = await fetch(`http://localhost:8081/course/user/${dbUser.id}`);
@@ -63,7 +51,6 @@ const CourseDetails = ({ programId }) => {
   };
 
   useEffect(() => {
-    fetchProgramCourses();
     fetchAvailableCourses();
   }, [programId]);
 
@@ -85,13 +72,13 @@ const CourseDetails = ({ programId }) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!currentCourseProgram.courseId) {
-      alert("Please select a course");
+      alert(t('course.pleaseSelectCourse', { defaultValue: 'Please select a course' }));
       return;
     }
     
     currentCourseProgram.id ? await updateCourseProgram(currentCourseProgram) : await createCourseProgram(currentCourseProgram);
     resetForm();
-    fetchProgramCourses();
+    await onRefresh();
   };
 
   const resetForm = () => {
@@ -106,12 +93,24 @@ const CourseDetails = ({ programId }) => {
     setSelectedCourse(null);
   };
 
+  // The backend's CourseProgramDto expects a nested `course` object
+  // (matching CourseDto), not a flat `courseId`, so translate the form's
+  // internal shape into that before sending.
+  const toCourseProgramDto = (courseProgram) => {
+    const { courseId, ...rest } = courseProgram;
+    return {
+      ...rest,
+      programId,
+      course: { id: courseId },
+    };
+  };
+
   const createCourseProgram = async (courseProgram) => {
     try {
       const response = await fetch(`http://localhost:8081/courseProgram`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...courseProgram, programId }),
+        body: JSON.stringify(toCourseProgramDto(courseProgram)),
       });
       
       if (!response.ok) {
@@ -119,7 +118,7 @@ const CourseDetails = ({ programId }) => {
       }
     } catch (error) {
       console.error("Error creating course program:", error);
-      alert(`Error: ${error.message}`);
+      alert(t('course.errorPrefix', { error: error.message, defaultValue: `Error: ${error.message}` }));
     }
   };
 
@@ -128,7 +127,7 @@ const CourseDetails = ({ programId }) => {
       const response = await fetch(`http://localhost:8081/courseProgram/${courseProgram.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...courseProgram, programId }),
+        body: JSON.stringify(toCourseProgramDto(courseProgram)),
       });
       
       if (!response.ok) {
@@ -136,12 +135,12 @@ const CourseDetails = ({ programId }) => {
       }
     } catch (error) {
       console.error("Error updating course program:", error);
-      alert(`Error: ${error.message}`);
+      alert(t('course.errorPrefix', { error: error.message, defaultValue: `Error: ${error.message}` }));
     }
   };
 
   const deleteCourseProgram = async (id) => {
-    if (window.confirm("Are you sure you want to delete this course?")) {
+    if (window.confirm(t('course.deleteCourseConfirmation', { defaultValue: 'Are you sure you want to delete this course?' }))) {
       try {
         const response = await fetch(`http://localhost:8081/courseProgram/${id}`, { method: 'DELETE' });
         
@@ -149,10 +148,10 @@ const CourseDetails = ({ programId }) => {
           throw new Error("Failed to delete course program");
         }
         
-        fetchProgramCourses();
+        await onRefresh();
       } catch (error) {
         console.error("Error deleting course program:", error);
-        alert(`Error: ${error.message}`);
+        alert(t('course.errorPrefix', { error: error.message, defaultValue: `Error: ${error.message}` }));
       }
     }
   };
@@ -167,10 +166,10 @@ const CourseDetails = ({ programId }) => {
         throw new Error("Failed to generate learning outcomes");
       }
       
-      alert("Learning outcomes generated successfully!");
+      alert(t('course.outcomesGeneratedSuccess', { defaultValue: 'Learning outcomes generated successfully!' }));
     } catch (error) {
       console.error("Error generating learning outcomes:", error);
-      alert(`Error: ${error.message}`);
+      alert(t('course.errorPrefix', { error: error.message, defaultValue: `Error: ${error.message}` }));
     }
   };
 
@@ -184,16 +183,16 @@ const CourseDetails = ({ programId }) => {
         throw new Error("Failed to generate courses");
       }
       
-      fetchProgramCourses();
-      alert("Courses generated successfully!");
+      await onRefresh();
+      alert(t('course.coursesGeneratedSuccess', { defaultValue: 'Courses generated successfully!' }));
     } catch (error) {
       console.error("Error generating courses:", error);
-      alert(`Error: ${error.message}`);
+      alert(t('course.errorPrefix', { error: error.message, defaultValue: `Error: ${error.message}` }));
     }
   };
 
   const editCourseProgram = (courseProgram) => {
-    const course = availableCourses.find(c => c.id === courseProgram.courseId);
+    const course = availableCourses.find(c => c.id === courseProgram.course?.id) || courseProgram.course;
     setSelectedCourse(course);
     setCurrentCourseProgram({
       id: courseProgram.id,
@@ -201,7 +200,7 @@ const CourseDetails = ({ programId }) => {
       term: courseProgram.term,
       creditCount: courseProgram.creditCount,
       programId,
-      courseId: courseProgram.courseId
+      courseId: courseProgram.course?.id
     });
   };
 
@@ -211,7 +210,9 @@ const CourseDetails = ({ programId }) => {
       
       <Box elevation={3} sx={{ p: 3, mb: 4 }}>
         <Typography variant="h6" mb={2}>
-          {currentCourseProgram.id ? 'Update Course' : 'Add New Course'}
+          {currentCourseProgram.id
+            ? t('course.updateCourse', { defaultValue: 'Update Course' })
+            : t('course.addNewCourse', { defaultValue: 'Add New Course' })}
         </Typography>
         
         <form onSubmit={handleSubmit}>
@@ -220,7 +221,15 @@ const CourseDetails = ({ programId }) => {
               <Autocomplete
                 id="course-select"
                 options={availableCourses}
-                getOptionLabel={(option) => `${option.code} - ${option.nameEn}`}
+                getOptionLabel={(option) =>
+  `${option.code} - ${
+    i18n.language === "ru"
+      ? option.nameRu
+      : i18n.language === "kk"
+        ? option.nameKz
+        : option.nameEn
+  }`
+}
                 value={selectedCourse}
                 onChange={handleCourseChange}
                 renderInput={(params) => (
@@ -228,7 +237,7 @@ const CourseDetails = ({ programId }) => {
                     {...params}
                     required
                     fullWidth
-                    label="Select Course"
+                    label={t('course.selectCourse', { defaultValue: 'Select Course' })}
                     variant="outlined"
                   />
                 )}
@@ -240,7 +249,7 @@ const CourseDetails = ({ programId }) => {
                 <Grid item xs={12} md={2}>
                   <TextField
                     fullWidth
-                    label="Year"
+                    label={t('course.year', { defaultValue: 'Year' })}
                     name="year"
                     type="number"
                     value={currentCourseProgram.year}
@@ -251,7 +260,7 @@ const CourseDetails = ({ programId }) => {
                 <Grid item xs={12} md={2}>
                   <TextField
                     fullWidth
-                    label="Term"
+                    label={t('course.term', { defaultValue: 'Term' })}
                     name="term"
                     type="number"
                     value={currentCourseProgram.term}
@@ -262,7 +271,7 @@ const CourseDetails = ({ programId }) => {
                 <Grid item xs={12} md={2}>
                   <TextField
                     fullWidth
-                    label="Credit Count"
+                    label={t('course.creditCount', { defaultValue: 'Credit Count' })}
                     name="creditCount"
                     type="number"
                     value={currentCourseProgram.creditCount}
@@ -281,7 +290,9 @@ const CourseDetails = ({ programId }) => {
                   startIcon={<AddIcon />}
                   color={currentCourseProgram.id ? "secondary" : "primary"}
                 >
-                  {currentCourseProgram.id ? 'Update Course' : 'Add Course'}
+                  {currentCourseProgram.id
+                    ? t('course.updateCourse', { defaultValue: 'Update Course' })
+                    : t('course.addCourse', { defaultValue: 'Add Course' })}
                 </Button>
                 
                 <Button 
@@ -289,7 +300,9 @@ const CourseDetails = ({ programId }) => {
                   color="secondary" 
                   onClick={() => setShowAdvanced(!showAdvanced)}
                 >
-                  {showAdvanced ? "Hide Advanced Edit" : "Show Advanced Edit"}
+                  {showAdvanced
+                    ? t('course.hideAdvancedEdit', { defaultValue: 'Hide Advanced Edit' })
+                    : t('course.showAdvancedEdit', { defaultValue: 'Show Advanced Edit' })}
                 </Button>
                 
                 {currentCourseProgram.id && (
@@ -298,7 +311,7 @@ const CourseDetails = ({ programId }) => {
                     color="error" 
                     onClick={resetForm}
                   >
-                    Cancel
+                    {t('course.cancel', { defaultValue: 'Cancel' })}
                   </Button>
                 )}
               </Box>
@@ -309,7 +322,7 @@ const CourseDetails = ({ programId }) => {
       
       <Box display="flex" justifyContent="space-around" alignItems="center" mb={2}>
         <Typography variant="h6">
-          Course List ({programCourses.length})
+          {t('course.courseList', { count: courses.length, defaultValue: `Course List (${courses.length})` })}
         </Typography>
         
         <Button 
@@ -318,7 +331,7 @@ const CourseDetails = ({ programId }) => {
           startIcon={<AutorenewIcon />}
           onClick={generateCourses}
         >
-          Generate Courses
+          {t('course.generateCourses', { defaultValue: 'Generate Courses' })}
         </Button>
       </Box>
       
@@ -326,27 +339,40 @@ const CourseDetails = ({ programId }) => {
         <Table>
           <TableHead>
             <TableRow sx={{ bgcolor: 'primary.main' }}>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Code</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name (English)</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Year</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Term</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Credits</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Actions</TableCell>
+              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>{t('course.code', { defaultValue: 'Code' })}</TableCell>
+              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>{t('course.name', { defaultValue: 'Name' })}</TableCell>
+              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>{t('course.year', { defaultValue: 'Year' })}</TableCell>
+              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>{t('course.term', { defaultValue: 'Term' })}</TableCell>
+              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>{t('course.credits', { defaultValue: 'Credits' })}</TableCell>
+              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>{t('course.actions', { defaultValue: 'Actions' })}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-          {programCourses.length > 0 ? (
-            programCourses.map((courseProgram) => {
-              // Find the matching course from availableCourses
-              const course = availableCourses.find(c => c.id === courseProgram.courseId);
+          {courses.length > 0 ? (
+            courses.map((courseProgram) => {
+              // The API returns the course data nested directly on each
+              // course-program record, so use it as-is rather than looking
+              // it up in availableCourses (that list is only for the
+              // "select a course to add" autocomplete above).
+              const course = courseProgram.course;
+
+              // Resolve the display name based on the active app language,
+              // same fallback pattern used elsewhere (Job/Standard/Outcome).
+              const courseName = course
+                ? (i18n.language === 'ru'
+                    ? course.nameRu
+                    : i18n.language === 'kk'
+                      ? course.nameKz
+                      : course.nameEn)
+                : null;
 
               return (
                 <TableRow key={courseProgram.id} hover>
                   <TableCell>
-                    <Chip label={course?.code || "N/A"} size="small" color="white" variant="outlined" />
+                    <Chip label={course?.code || t('course.notAvailable', { defaultValue: 'N/A' })} size="small" color="white" variant="outlined" />
                   </TableCell>
                   <TableCell>
-                    <TruncatedText text={course?.nameEn || "N/A"} maxLength={80} />
+                    <TruncatedText text={courseName || t('course.notAvailable', { defaultValue: 'N/A' })} maxLength={80} />
                   </TableCell>
                   <TableCell>{courseProgram.year}</TableCell>
                   <TableCell>{courseProgram.term}</TableCell>
@@ -373,7 +399,7 @@ const CourseDetails = ({ programId }) => {
                         color="white"
                         onClick={() => generateLearningOutcomes(courseProgram.id)}
                       >
-                        Generate Outcomes
+                        {t('course.generateOutcomes', { defaultValue: 'Generate Outcomes' })}
                       </Button>
                     </Box>
                   </TableCell>
@@ -384,7 +410,7 @@ const CourseDetails = ({ programId }) => {
             <TableRow>
               <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
                 <Typography variant="body1" color="text.secondary">
-                  No courses added yet. Add a course or generate courses.
+                  {t('course.noCoursesAvailable', { defaultValue: 'No courses added yet. Add a course or generate courses.' })}
                 </Typography>
               </TableCell>
             </TableRow>

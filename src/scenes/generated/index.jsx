@@ -99,26 +99,14 @@ const sections = [
     id: "courses",
     title: t("generated.courses"),
     icon: <AssignmentIcon />,
-    component: <CourseDetails courses={programData?.courses ?? []} />,
+    component: <CourseDetails
+      courses={programData?.courses ?? []}
+      programId={program_id}
+      onRefresh={fetchProgramData}
+    />,
   },
 ];
 
-  // useEffect(() => {
-  //   const fetchProgramDetails = async () => {
-  //     try {
-  //       const response = await fetch(`http://localhost:8081/program/data/${program_id}`);
-  //       if (!response.ok) throw new Error("Failed to fetch program details");
-  //       const data = await response.json();
-  //       setProgramData(data);
-  //     } catch (error) {
-  //       console.error("Error fetching program details:", error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchProgramDetails();
-  // }, [program_id]);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);

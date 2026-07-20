@@ -147,5 +147,31 @@
   "failedToSaveOutcome": "Оқыту нәтижесін сақтау мүмкін болмады: {{error}}",
   "failedToDeleteOutcome": "Оқыту нәтижесін жою мүмкін болмады: {{error}}",
   "failedToGenerateOutcomes": "Оқыту нәтижелерін генерациялау мүмкін болмады: {{error}}"
+},
+"course": {
+  "updateCourse": "Курсты жаңарту",
+  "addNewCourse": "Жаңа курс қосу",
+  "addCourse": "Курс қосу",
+  "selectCourse": "Курсты таңдаңыз",
+  "year": "Жыл",
+  "term": "Семестр",
+  "creditCount": "Кредит саны",
+  "hideAdvancedEdit": "Кеңейтілген өңдеуді жасыру",
+  "showAdvancedEdit": "Кеңейтілген өңдеуді көрсету",
+  "cancel": "Бас тарту",
+  "courseList": "Курстар тізімі ({{count}})",
+  "generateCourses": "Курстарды генерациялау",
+  "code": "Код",
+  "name": "Атауы",
+  "credits": "Кредиттер",
+  "actions": "Әрекеттер",
+  "generateOutcomes": "Нәтижелерді генерациялау",
+  "noCoursesAvailable": "Курстар әлі қосылмаған. Курс қосыңыз немесе генерациялаңыз.",
+  "notAvailable": "Қ/Ж",
+  "pleaseSelectCourse": "Курсты таңдаңыз",
+  "deleteCourseConfirmation": "Бұл курсты жойғыңыз келетініне сенімдісіз бе?",
+  "outcomesGeneratedSuccess": "Оқыту нәтижелері сәтті генерацияланды!",
+  "coursesGeneratedSuccess": "Курстар сәтті генерацияланды!",
+  "errorPrefix": "Қате: {{error}}"
 }
 }

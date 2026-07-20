@@ -152,5 +152,31 @@
   "failedToSaveOutcome": "Failed to save learning outcome: {{error}}",
   "failedToDeleteOutcome": "Failed to delete learning outcome: {{error}}",
   "failedToGenerateOutcomes": "Failed to generate learning outcomes: {{error}}"
+},
+"course": {
+  "updateCourse": "Update Course",
+  "addNewCourse": "Add New Course",
+  "addCourse": "Add Course",
+  "selectCourse": "Select Course",
+  "year": "Year",
+  "term": "Term",
+  "creditCount": "Credit Count",
+  "hideAdvancedEdit": "Hide Advanced Edit",
+  "showAdvancedEdit": "Show Advanced Edit",
+  "cancel": "Cancel",
+  "courseList": "Course List ({{count}})",
+  "generateCourses": "Generate Courses",
+  "code": "Code",
+  "name": "Name",
+  "credits": "Credits",
+  "actions": "Actions",
+  "generateOutcomes": "Generate Outcomes",
+  "noCoursesAvailable": "No courses added yet. Add a course or generate courses.",
+  "notAvailable": "N/A",
+  "pleaseSelectCourse": "Please select a course",
+  "deleteCourseConfirmation": "Are you sure you want to delete this course?",
+  "outcomesGeneratedSuccess": "Learning outcomes generated successfully!",
+  "coursesGeneratedSuccess": "Courses generated successfully!",
+  "errorPrefix": "Error: {{error}}"
 }
 }

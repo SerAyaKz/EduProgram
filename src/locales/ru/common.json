@@ -147,5 +147,31 @@
   "failedToSaveOutcome": "Не удалось сохранить результат обучения: {{error}}",
   "failedToDeleteOutcome": "Не удалось удалить результат обучения: {{error}}",
   "failedToGenerateOutcomes": "Не удалось сгенерировать результаты обучения: {{error}}"
+},
+"course": {
+  "updateCourse": "Обновить курс",
+  "addNewCourse": "Добавить новый курс",
+  "addCourse": "Добавить курс",
+  "selectCourse": "Выберите курс",
+  "year": "Год",
+  "term": "Семестр",
+  "creditCount": "Количество кредитов",
+  "hideAdvancedEdit": "Скрыть расширенное редактирование",
+  "showAdvancedEdit": "Показать расширенное редактирование",
+  "cancel": "Отмена",
+  "courseList": "Список курсов ({{count}})",
+  "generateCourses": "Сгенерировать курсы",
+  "code": "Код",
+  "name": "Название",
+  "credits": "Кредиты",
+  "actions": "Действия",
+  "generateOutcomes": "Сгенерировать результаты",
+  "noCoursesAvailable": "Курсы ещё не добавлены. Добавьте курс или сгенерируйте курсы.",
+  "notAvailable": "Н/Д",
+  "pleaseSelectCourse": "Пожалуйста, выберите курс",
+  "deleteCourseConfirmation": "Вы уверены, что хотите удалить этот курс?",
+  "outcomesGeneratedSuccess": "Результаты обучения успешно сгенерированы!",
+  "coursesGeneratedSuccess": "Курсы успешно сгенерированы!",
+  "errorPrefix": "Ошибка: {{error}}"
 }
 }
